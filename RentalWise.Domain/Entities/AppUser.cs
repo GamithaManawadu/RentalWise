@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RentalWise.Domain.Entities;
 
-public class User
+public class AppUser
 {
     public Guid Id { get; set; } = Guid.NewGuid();  // Primary key
     public string Username { get; set; } = null!;

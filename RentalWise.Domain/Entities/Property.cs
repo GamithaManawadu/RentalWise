@@ -15,7 +15,8 @@ public class Property
     public decimal RentAmount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public string UserId { get; set; } = null!; // FK to AspNetUsers
+    public string LandlordId { get; set; } = null!; // FK to AspNetUsers
+    public ApplicationUser Landlord { get; set; } = null!;
 
     public ICollection<Lease> Leases { get; set; } = new List<Lease>();
 }

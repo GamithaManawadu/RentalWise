@@ -1,16 +1,27 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RentalWise.Application.Mappings;
 using RentalWise.Application.Services;
 using RentalWise.Application.Validators;
+using RentalWise.Domain.Entities;
 using RentalWise.Infrastructure.Persistence;
+using RentalWise.Infrastructure.SeedData;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyHere";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "RentalWiseAPI";
 
@@ -82,6 +93,13 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreatePropertyDtoValidator>
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
+
+// Seed roles on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await IdentitySeeder.SeedRolesAsync(services);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
