@@ -11,13 +11,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RentalWise.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RentalWise.Application", "RentalWise.Application\RentalWise.Application.csproj", "{8FDAF58C-94FE-43CE-9576-19B214EC0BE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RentalWise.Tests", "RentalWise.Tests\RentalWise.Tests.csproj", "{F202AC6F-479F-42E7-A70E-E78F2B6F26B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{97B54B88-A5C9-48B3-B400-239D61AFAAEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -36,5 +35,15 @@ Global
 		{8FDAF58C-94FE-43CE-9576-19B214EC0BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FDAF58C-94FE-43CE-9576-19B214EC0BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FDAF58C-94FE-43CE-9576-19B214EC0BE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F202AC6F-479F-42E7-A70E-E78F2B6F26B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F202AC6F-479F-42E7-A70E-E78F2B6F26B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F202AC6F-479F-42E7-A70E-E78F2B6F26B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F202AC6F-479F-42E7-A70E-E78F2B6F26B6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1F4CF77A-6F68-451D-B638-090C9FBFB26D}
 	EndGlobalSection
 EndGlobal

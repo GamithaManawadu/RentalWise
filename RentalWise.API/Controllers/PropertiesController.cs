@@ -71,6 +71,16 @@ public class PropertiesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create(CreatePropertyDto model)
     {
+        if (model == null)
+        {
+            return BadRequest("Property data is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
             return Unauthorized();
@@ -78,6 +88,12 @@ public class PropertiesController : ControllerBase
         // Map from DTO to Entity
         var property = _mapper.Map<Property>(model);
         property.UserId = userId; // assign manually
+
+        if (model.RentAmount < 0)
+        {
+            ModelState.AddModelError("RentAmount", "Rent amount cannot be negative.");
+            return BadRequest(ModelState);
+        }
 
         _context.Properties.Add(property);
         await _context.SaveChangesAsync();
@@ -97,6 +113,11 @@ public class PropertiesController : ControllerBase
         if (userId == null)
             return Unauthorized();
 
+        if (model == null)
+        {
+            return BadRequest();
+        }
+
         var property = await _context.Properties.FindAsync(id);
         if (property == null)
             return NotFound();
@@ -105,6 +126,12 @@ public class PropertiesController : ControllerBase
             return Forbid();
 
         _mapper.Map(model, property);// AutoMapper does the field mapping
+
+        if (model.RentAmount < 0)
+        {
+            ModelState.AddModelError("RentAmount", "Rent amount cannot be negative.");
+            return BadRequest(ModelState);
+        }
 
         await _context.SaveChangesAsync();
         return NoContent();
