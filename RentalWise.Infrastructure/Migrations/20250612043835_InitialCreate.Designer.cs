@@ -12,8 +12,8 @@ using RentalWise.Infrastructure.Persistence;
 namespace RentalWise.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250606060032_InitialIdentityMigration")]
-    partial class InitialIdentityMigration
+    [Migration("20250612043835_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -128,32 +128,6 @@ namespace RentalWise.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("RentalWise.Domain.Entities.AppUser", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LandLord");
-                });
-
             modelBuilder.Entity("RentalWise.Domain.Entities.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -251,6 +225,68 @@ namespace RentalWise.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("RentalWise.Domain.Entities.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegionId");
+
+                    b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Landlord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PostCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Suburb")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LandLord");
+                });
+
             modelBuilder.Entity("RentalWise.Domain.Entities.Lease", b =>
                 {
                     b.Property<int>("Id")
@@ -292,24 +328,90 @@ namespace RentalWise.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("AvailableDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Bathrooms")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Bedrooms")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Features")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ParkingSpaces")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("PetsAllowed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PropertyType")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("RentAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("UserId")
+                    b.Property<int>("SuburbId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SuburbId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Region", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Properties");
+                    b.ToTable("Regions");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Suburb", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DistrictId");
+
+                    b.ToTable("Suburbs");
                 });
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Tenant", b =>
@@ -392,6 +494,28 @@ namespace RentalWise.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentalWise.Domain.Entities.District", b =>
+                {
+                    b.HasOne("RentalWise.Domain.Entities.Region", "Region")
+                        .WithMany("Districts")
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Landlord", b =>
+                {
+                    b.HasOne("RentalWise.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("RentalWise.Domain.Entities.Lease", b =>
                 {
                     b.HasOne("RentalWise.Domain.Entities.Property", "Property")
@@ -413,7 +537,47 @@ namespace RentalWise.Infrastructure.Migrations
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Property", b =>
                 {
+                    b.HasOne("RentalWise.Domain.Entities.Suburb", "Suburb")
+                        .WithMany()
+                        .HasForeignKey("SuburbId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalWise.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Suburb");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Suburb", b =>
+                {
+                    b.HasOne("RentalWise.Domain.Entities.District", "District")
+                        .WithMany("Suburbs")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("District");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.District", b =>
+                {
+                    b.Navigation("Suburbs");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Property", b =>
+                {
                     b.Navigation("Leases");
+                });
+
+            modelBuilder.Entity("RentalWise.Domain.Entities.Region", b =>
+                {
+                    b.Navigation("Districts");
                 });
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Tenant", b =>

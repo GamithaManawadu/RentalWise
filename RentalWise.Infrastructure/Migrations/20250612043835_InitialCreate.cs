@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RentalWise.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentityMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,35 +52,16 @@ namespace RentalWise.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LandLord",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LandLord", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Properties",
+                name: "Regions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Properties", x => x.Id);
+                    table.PrimaryKey("PK_Regions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -206,6 +187,109 @@ namespace RentalWise.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LandLord",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Suburb = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostCode = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LandLord", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LandLord_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Districts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RegionId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Districts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Districts_Regions_RegionId",
+                        column: x => x.RegionId,
+                        principalTable: "Regions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Suburbs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DistrictId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Suburbs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Suburbs_Districts_DistrictId",
+                        column: x => x.DistrictId,
+                        principalTable: "Districts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Properties",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SuburbId = table.Column<int>(type: "int", nullable: false),
+                    RentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Bedrooms = table.Column<int>(type: "int", nullable: false),
+                    Bathrooms = table.Column<int>(type: "int", nullable: false),
+                    ParkingSpaces = table.Column<int>(type: "int", nullable: false),
+                    PropertyType = table.Column<int>(type: "int", nullable: false),
+                    Features = table.Column<int>(type: "int", nullable: false),
+                    PetsAllowed = table.Column<bool>(type: "bit", nullable: false),
+                    AvailableDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Properties", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Properties_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Properties_Suburbs_SuburbId",
+                        column: x => x.SuburbId,
+                        principalTable: "Suburbs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Leases",
                 columns: table => new
                 {
@@ -273,6 +357,16 @@ namespace RentalWise.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Districts_RegionId",
+                table: "Districts",
+                column: "RegionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LandLord_UserId",
+                table: "LandLord",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Leases_PropertyId",
                 table: "Leases",
                 column: "PropertyId");
@@ -281,6 +375,21 @@ namespace RentalWise.Infrastructure.Migrations
                 name: "IX_Leases_TenantId",
                 table: "Leases",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Properties_SuburbId",
+                table: "Properties",
+                column: "SuburbId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Properties_UserId",
+                table: "Properties",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Suburbs_DistrictId",
+                table: "Suburbs",
+                column: "DistrictId");
         }
 
         /// <inheritdoc />
@@ -311,13 +420,22 @@ namespace RentalWise.Infrastructure.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
                 name: "Properties");
 
             migrationBuilder.DropTable(
                 name: "Tenants");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Suburbs");
+
+            migrationBuilder.DropTable(
+                name: "Districts");
+
+            migrationBuilder.DropTable(
+                name: "Regions");
         }
     }
 }

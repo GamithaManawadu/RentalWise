@@ -68,7 +68,7 @@ public class AuthService : IAuthService
         await _userManager.AddToRoleAsync(user, dto.Role);
 
         // Return token (or user ID if token not implemented yet)
-        return GenerateToken(user);
+        return await GenerateTokenAsync(user);
     }
 
     public async Task<string> LoginAsync(LoginDto dto)
@@ -77,10 +77,10 @@ public class AuthService : IAuthService
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             throw new Exception("Invalid credentials");
 
-        return GenerateToken(user);
+        return await GenerateTokenAsync(user);
     }
 
-    private string GenerateToken(ApplicationUser user)
+    private async Task<string> GenerateTokenAsync(ApplicationUser user)
     {
         var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
         var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
@@ -91,12 +91,21 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Email, user.Email)
         };
 
-        return new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
+        // Add role claims
+        var roles = await _userManager.GetRolesAsync(user);
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             claims: claims,
             expires: DateTime.UtcNow.AddHours(4),
             signingCredentials: creds
-        ));
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
 

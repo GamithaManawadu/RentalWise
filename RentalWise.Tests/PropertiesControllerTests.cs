@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RentalWise.API.Controllers;
 using RentalWise.Domain.Entities;
-using RentalWise.Application.DTOs;
 using RentalWise.Infrastructure.Persistence;
 using System;
 using System.Collections.Generic;
@@ -15,6 +14,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using RentalWise.Application.DTOs.Property;
 
 namespace RentalWise.Tests;
 

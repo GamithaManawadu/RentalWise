@@ -1,3 +1,4 @@
+using CloudinaryDotNet;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RentalWise.API.Configurations;
 using RentalWise.Application.Mappings;
 using RentalWise.Application.Services;
 using RentalWise.Application.Validators;
@@ -92,6 +94,16 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreatePropertyDtoValidator>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+
+builder.Services.AddSingleton(s =>
+{
+    var config = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>();
+    var account = new Account(config.CloudName, config.ApiKey, config.ApiSecret);
+    return new CloudinaryDotNet.Cloudinary(account);
+});
+builder.Services.AddScoped<IMediaUploadService, MediaUploadService>();
+
 var app = builder.Build();
 
 // Seed roles on startup
@@ -99,6 +111,9 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await IdentitySeeder.SeedRolesAsync(services);
+
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await LocationSeeder.SeedLocations(context);
 }
 
 // Configure the HTTP request pipeline.

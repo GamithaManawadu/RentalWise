@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RentalWise.Application.DTOs;
+namespace RentalWise.Application.DTOs.Property;
 
-public class PropertyDto
+public class RegionDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public string Address { get; set; } = null!;
-    public decimal RentAmount { get; set; }
 }

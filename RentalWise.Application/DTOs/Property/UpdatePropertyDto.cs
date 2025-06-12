@@ -1,0 +1,32 @@
+﻿using Microsoft.AspNetCore.Http;
+using RentalWise.Domain.Enum;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace RentalWise.Application.DTOs.Property;
+
+public class UpdatePropertyDto
+{
+    [Required]
+    public string Name { get; set; } = null!;
+    [Required]
+    public string Address { get; set; } = null!;
+
+    public int SuburbId { get; set; }
+    public decimal RentAmount { get; set; }
+    public int Bedrooms { get; set; }
+    public int Bathrooms { get; set; }
+    public int ParkingSpaces { get; set; }
+
+    public PropertyType PropertyType { get; set; }
+    public PropertyFeatures Features { get; set; }
+    public bool PetsAllowed { get; set; }
+    public DateTime AvailableDate { get; set; }
+
+    public List<IFormFile>? NewImages { get; set; }
+    public IFormFile? NewVideo { get; set; }
+}

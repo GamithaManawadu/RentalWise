@@ -13,10 +13,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<Region> Regions => Set<Region>();
+    public DbSet<District> Districts => Set<District>();
+    public DbSet<Suburb> Suburbs => Set<Suburb>();
     public DbSet<Property> Properties => Set<Property>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Lease> Leases => Set<Lease>();
-    public DbSet<AppUser> LandLord => Set<AppUser>();
+    public DbSet<Landlord> LandLord => Set<Landlord>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -36,5 +39,27 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
             .HasOne(l => l.Tenant)
             .WithMany(t => t.Leases)
             .HasForeignKey(l => l.TenantId);
+
+        // Landlord relationship
+        modelBuilder.Entity<Landlord>()
+            .HasOne(l => l.User)
+            .WithMany() // Use .WithOne() if you plan to add: public Landlord Landlord { get; set; } in ApplicationUser
+            .HasForeignKey(l => l.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<District>()
+            .HasOne(d => d.Region)
+            .WithMany(r => r.Districts)
+            .HasForeignKey(d => d.RegionId);
+
+        modelBuilder.Entity<Suburb>()
+            .HasOne(s => s.District)
+            .WithMany(d => d.Suburbs)
+            .HasForeignKey(s => s.DistrictId);
+
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.Suburb)
+            .WithMany()
+            .HasForeignKey(p => p.SuburbId);
     }
 }

@@ -2,16 +2,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RentalWise.Application.DTOs;
 using RentalWise.Domain.Entities;
 using RentalWise.Infrastructure.Persistence;
 using System.Security.Claims;
 using RentalWise.Application.Mappings;
+using RentalWise.Application.DTOs.Property;
 namespace RentalWise.API.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Landlord")]
 public class PropertiesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -23,9 +23,9 @@ public class PropertiesController : ControllerBase
         _mapper = mapper;
     }
 
-    // GET: api/properties
+    
     [HttpGet]
-    [Authorize]
+    [Authorize(Roles = "Landlord")]
     public async Task<ActionResult<IEnumerable<PropertyDto>>> GetAll(int pageNumber = 1, int pageSize = 10) //pagination 10 per page
     {
         var properties = await _context.Properties
@@ -44,16 +44,16 @@ public class PropertiesController : ControllerBase
         return Ok(properties);
     }
 
-    // GET: api/properties/5
-    [HttpGet("{id}")]
-    [Authorize]
-    public async Task<ActionResult<PropertyDto>> GetById(int id)
+    
+   /* [HttpGet("my")]
+    [Authorize(Roles = "Landlord")]
+    public async Task<ActionResult<IEnumerable<PropertyDto>>> GetMyProperty(int pageNumber = 1, int pageSize = 10)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null)
-            return Unauthorized();
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var property = await _context.Properties.FindAsync(id);
+        var property = await _context.Properties.FirstOrDefaultAsync(p => p.UserId == userId);
         if (property == null)
             return NotFound();
 
@@ -64,6 +64,36 @@ public class PropertiesController : ControllerBase
 
 
         return Ok(result);
+    }*/
+
+    [HttpGet("my")]
+    [Authorize(Roles = "Landlord")]
+    public async Task<ActionResult<IEnumerable<PropertyDto>>> GetMyProperties(int pageNumber = 1, int pageSize = 10)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
+
+        var query = _context.Properties
+            .Where(p => p.UserId == userId) //  Guid FK
+            .OrderByDescending(p => p.CreatedAt); // Optional ordering
+
+        var totalCount = await query.CountAsync();
+        var properties = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var result = _mapper.Map<List<PropertyDto>>(properties);
+
+        // Optional: include pagination metadata
+        return Ok(new
+        {
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Items = result
+        });
     }
 
     // POST: api/properties
@@ -81,9 +111,9 @@ public class PropertiesController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null)
-            return Unauthorized();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
         // Map from DTO to Entity
         var property = _mapper.Map<Property>(model);
@@ -101,30 +131,31 @@ public class PropertiesController : ControllerBase
         // Map from Entity to DTO
         var result = _mapper.Map<PropertyDto>(property);
 
-        return CreatedAtAction(nameof(GetById), new { id = property.Id }, result);
+        return CreatedAtAction(nameof(GetMyProperties), new { id = property.Id }, result);
     }
 
     // PUT: api/properties/5
     [HttpPut("{id}")]
-    [Authorize]
+    [Authorize(Roles = "Landlord")]
     public async Task<IActionResult> Update(int id, UpdatePropertyDto model)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null)
-            return Unauthorized();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
+        
 
         if (model == null)
         {
             return BadRequest();
         }
 
-        var property = await _context.Properties.FindAsync(id);
+        var property = await _context.Properties
+         .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+
         if (property == null)
-            return NotFound();
+            return NotFound("Property not found or not owned by user.");
 
-        if (property.UserId != userId)
-            return Forbid();
-
+        
         _mapper.Map(model, property);// AutoMapper does the field mapping
 
         if (model.RentAmount < 0)
@@ -142,17 +173,13 @@ public class PropertiesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null)
-            return Unauthorized();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var property = await _context.Properties.FindAsync(id);
+        var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
         if (property == null)
-            return NotFound();
-
-        // Check if the property belongs to the current user
-        if (property.UserId != userId)
-            return Forbid(); // or return StatusCode(403);
+            return NotFound("Property not found or not owned by user.");
 
         _context.Properties.Remove(property);
         await _context.SaveChangesAsync();

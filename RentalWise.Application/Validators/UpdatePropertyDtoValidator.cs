@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using RentalWise.Application.DTOs;
+using RentalWise.Application.DTOs.Property;
 using System;
 using System.Collections.Generic;
 using System.Linq;
