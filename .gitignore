@@ -399,6 +399,11 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# Common secret files
+.env
+appsettings.Development.json
+secrets.json
+
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
