@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<District> Districts => Set<District>();
     public DbSet<Suburb> Suburbs => Set<Suburb>();
     public DbSet<Property> Properties => Set<Property>();
+    public DbSet<PropertyMedia> PropertyMedia => Set<PropertyMedia>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Lease> Leases => Set<Lease>();
     public DbSet<Landlord> LandLord => Set<Landlord>();

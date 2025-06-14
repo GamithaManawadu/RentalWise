@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 using RentalWise.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,5 +11,8 @@ namespace RentalWise.Application.Services;
 
 public interface IMediaUploadService
 {
-    Task<List<PropertyMedia>> UploadPropertyMediaAsync(List<IFormFile> images, IFormFile? video);
+    Task<List<PropertyMedia>> UploadPropertyMediaAsync(List<IFormFile> images, IFormFile? video, int existingImageCount,
+    bool videoAlreadyExists);
+    Task DeleteMediaOneByOneAsync(IEnumerable<PropertyMedia> mediaList);
+    Task DeleteMediaAsync(DeletionParams deletionParams);
 }

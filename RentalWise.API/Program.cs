@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -94,12 +95,19 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreatePropertyDtoValidator>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+});
+
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 
 builder.Services.AddSingleton(s =>
 {
     var config = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>();
-    var account = new Account(config.CloudName, config.ApiKey, config.ApiSecret);
+    var account = new Account(config.CloudName,
+                              config.ApiKey,
+                              config.ApiSecret);
     return new CloudinaryDotNet.Cloudinary(account);
 });
 builder.Services.AddScoped<IMediaUploadService, MediaUploadService>();

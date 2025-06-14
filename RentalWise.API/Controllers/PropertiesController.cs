@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RentalWise.Application.DTOs.Property;
+using RentalWise.Application.Mappings;
+using RentalWise.Application.Services;
 using RentalWise.Domain.Entities;
 using RentalWise.Infrastructure.Persistence;
 using System.Security.Claims;
-using RentalWise.Application.Mappings;
-using RentalWise.Application.DTOs.Property;
 namespace RentalWise.API.Controllers;
 
 [ApiController]
@@ -16,11 +18,13 @@ public class PropertiesController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IMediaUploadService _mediaUploadService;
 
-    public PropertiesController(AppDbContext context, IMapper mapper)
+    public PropertiesController(AppDbContext context, IMapper mapper, IMediaUploadService mediaUploadService)
     {
         _context = context;
         _mapper = mapper;
+        _mediaUploadService = mediaUploadService;
     }
 
     
@@ -29,42 +33,15 @@ public class PropertiesController : ControllerBase
     public async Task<ActionResult<IEnumerable<PropertyDto>>> GetAll(int pageNumber = 1, int pageSize = 10) //pagination 10 per page
     {
         var properties = await _context.Properties
+       .Include(p => p.Media)
        .Skip((pageNumber - 1) * pageSize)
        .Take(pageSize)
-       .Select(p => new PropertyDto
-       {
-            Id = p.Id,
-            Name = p.Name,
-            Address = p.Address,
-            RentAmount = p.RentAmount
-        })
-        .ToListAsync();
+       .ToListAsync();
+       
         var result = _mapper.Map<List<PropertyDto>>(properties);
 
         return Ok(properties);
     }
-
-    
-   /* [HttpGet("my")]
-    [Authorize(Roles = "Landlord")]
-    public async Task<ActionResult<IEnumerable<PropertyDto>>> GetMyProperty(int pageNumber = 1, int pageSize = 10)
-    {
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
-            return Unauthorized("Invalid user ID.");
-
-        var property = await _context.Properties.FirstOrDefaultAsync(p => p.UserId == userId);
-        if (property == null)
-            return NotFound();
-
-        if (property.UserId != userId)
-            return Forbid(); // 403 Forbidden
-
-        var result = _mapper.Map<PropertyDto>(property);
-
-
-        return Ok(result);
-    }*/
 
     [HttpGet("my")]
     [Authorize(Roles = "Landlord")]
@@ -75,6 +52,7 @@ public class PropertiesController : ControllerBase
             return Unauthorized("Invalid user ID.");
 
         var query = _context.Properties
+            .Include(p => p.Media)
             .Where(p => p.UserId == userId) //  Guid FK
             .OrderByDescending(p => p.CreatedAt); // Optional ordering
 
@@ -99,7 +77,8 @@ public class PropertiesController : ControllerBase
     // POST: api/properties
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Create(CreatePropertyDto model)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Create([FromForm] CreatePropertyDto model)
     {
         if (model == null)
         {
@@ -125,44 +104,92 @@ public class PropertiesController : ControllerBase
             return BadRequest(ModelState);
         }
 
+        if (model.Images != null && model.Images.Count > 20)
+        {
+            ModelState.AddModelError("Images", "You can upload up to 20 images.");
+            return BadRequest(ModelState);
+        }
+
+        // Upload media using new method signature (existingImageCount = 0 for new property)
+        var mediaList = await _mediaUploadService.UploadPropertyMediaAsync(
+        model.Images ?? new List<IFormFile>(),
+        model.Video,
+        existingImageCount: 0,
+        videoAlreadyExists: false);
+
+        // Attach media to property
+        property.Media = mediaList;
+
         _context.Properties.Add(property);
         await _context.SaveChangesAsync();
 
         // Map from Entity to DTO
         var result = _mapper.Map<PropertyDto>(property);
-
         return CreatedAtAction(nameof(GetMyProperties), new { id = property.Id }, result);
     }
 
     // PUT: api/properties/5
     [HttpPut("{id}")]
     [Authorize(Roles = "Landlord")]
-    public async Task<IActionResult> Update(int id, UpdatePropertyDto model)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Update(int id, [FromForm] UpdatePropertyDto model)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
-        
 
         if (model == null)
-        {
             return BadRequest();
-        }
 
         var property = await _context.Properties
-         .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+            .Include(p => p.Media)
+            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
         if (property == null)
             return NotFound("Property not found or not owned by user.");
 
-        
-        _mapper.Map(model, property);// AutoMapper does the field mapping
+        _mapper.Map(model, property);
 
         if (model.RentAmount < 0)
         {
             ModelState.AddModelError("RentAmount", "Rent amount cannot be negative.");
             return BadRequest(ModelState);
         }
+
+        int existingImageCount = property.Media.Count(m => m.MediaType == "image");
+        bool videoAlreadyExists = property.Media.Any(m => m.MediaType == "video");
+
+        var newMedia = await _mediaUploadService.UploadPropertyMediaAsync(model.NewImages, model.NewVideo, existingImageCount, videoAlreadyExists);
+
+        foreach (var media in newMedia)
+        {
+            media.PropertyId = property.Id;
+            property.Media.Add(media);
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+
+    //Delete Individual Media
+    [HttpDelete("media/{mediaId}")]
+    [Authorize(Roles = "Landlord")]
+    public async Task<IActionResult> DeleteMedia(int mediaId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return Unauthorized();
+
+        var media = await _context.PropertyMedia
+            .Include(m => m.Property)
+            .FirstOrDefaultAsync(m => m.Id == mediaId && m.Property.UserId == userGuid);
+
+        if (media == null)
+            return NotFound("Media not found or not owned by user.");
+
+        await _mediaUploadService.DeleteMediaOneByOneAsync(new[] { media });
+        _context.PropertyMedia.Remove(media);
 
         await _context.SaveChangesAsync();
         return NoContent();
@@ -177,9 +204,19 @@ public class PropertiesController : ControllerBase
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
 
-        var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+        var property = await _context.Properties
+            .Include(p => p.Media)
+            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+
         if (property == null)
             return NotFound("Property not found or not owned by user.");
+
+        // Delete media from Cloudinary
+        foreach (var media in property.Media)
+        {
+            DeletionParams deletionParams = new DeletionParams(media.PublicId);
+            await _mediaUploadService.DeleteMediaAsync(deletionParams);
+        }
 
         _context.Properties.Remove(property);
         await _context.SaveChangesAsync();

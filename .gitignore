@@ -401,6 +401,7 @@ FodyWeavers.xsd
 
 # Common secret files
 .env
+appsettings.json
 appsettings.Development.json
 secrets.json
 
