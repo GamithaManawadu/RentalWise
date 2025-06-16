@@ -8,7 +8,9 @@ namespace RentalWise.Application.DTOs.Tenant;
 
 public class UpdateTenantDto
 {
-    public string FullName { get; set; } = null!;
-    public string Email { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
+    public string? Gender { get; set; }
     public string PhoneNumber { get; set; } = null!;
+    public string? Address { get; set; } = null!;
 }

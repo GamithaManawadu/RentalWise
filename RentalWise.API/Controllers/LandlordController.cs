@@ -23,9 +23,10 @@ public class LandlordController: ControllerBase
         _mapper = mapper;
     }
 
+
+
     [HttpPost]
-    [Authorize(Roles = "Landlord")]
-    public async Task<IActionResult> AddProfile([FromBody] CreateLandlordDto dto)
+    public async Task<IActionResult> AddLandlordProfile([FromBody] CreateLandlordDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -34,61 +35,89 @@ public class LandlordController: ControllerBase
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
 
-        // Check if profile already exists
-        var existingProfile = await _context.LandLord.FirstOrDefaultAsync(l => l.UserId == userId);
+        var existingProfile = await _context.LandLords.FirstOrDefaultAsync(l => l.UserId == userId);
         if (existingProfile != null)
             return Conflict("Profile already exists for this user.");
 
         var profile = _mapper.Map<Landlord>(dto);
         profile.UserId = userId;
 
-        _context.LandLord.Add(profile);
+        _context.LandLords.Add(profile);
         await _context.SaveChangesAsync();
 
         var resultDto = _mapper.Map<LandlordDto>(profile);
         return CreatedAtAction(nameof(GetMyProfile), new { id = profile.Id }, resultDto);
+    }
 
-            }
 
     [HttpGet]
-    [Authorize(Roles = "Landlord")]
     public async Task<IActionResult> GetMyProfile()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
 
-        var profile = await _context.LandLord
+        var profile = await _context.LandLords
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (profile == null)
-            return NotFound();
+            return NotFound("No profile found.");
 
         var responseDto = _mapper.Map<LandlordDto>(profile);
         return Ok(responseDto);
     }
 
+
     // Update landlord profile
     [HttpPut]
-    [Authorize(Roles = "Landlord")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateLandlordDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
+
+        var profile = await _context.LandLords.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (profile == null)
+            return NotFound("Profile not found.");
+
+        // Map only updated fields from DTO to entity
+        _mapper.Map(dto, profile);
+
+        _context.LandLords.Update(profile);
+        await _context.SaveChangesAsync();
+
+        var updatedDto = _mapper.Map<LandlordDto>(profile);
+        return Ok(updatedDto);
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteProfile()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
 
-        var profile = await _context.LandLord.FirstOrDefaultAsync(p => p.UserId == userId);
+        var landlord = await _context.LandLords
+        .Include(l => l.Properties)
+            .ThenInclude(p => p.Leases)
+        .FirstOrDefaultAsync(l => l.UserId == userId);
+
+        var profile = await _context.LandLords.FirstOrDefaultAsync(p => p.UserId == userId);
         if (profile == null)
-            return NotFound();
+            return NotFound("Landlord profile not found.");
 
-        // Map updated fields from DTO to entity
-        _mapper.Map(dto, profile);
+        var hasLeases = landlord.Properties.Any(p => p.Leases.Any());
+        if (hasLeases)
+            return BadRequest("Cannot delete profile. You have active leases associated with your properties.");
 
-        _context.LandLord.Update(profile);
+        // Soft delete
+        landlord.IsActive = false;
         await _context.SaveChangesAsync();
 
-        var updatedDto = _mapper.Map<LandlordDto>(profile);
-        return Ok(updatedDto);
+        return NoContent(); // 204 - Successfully deleted
     }
 }

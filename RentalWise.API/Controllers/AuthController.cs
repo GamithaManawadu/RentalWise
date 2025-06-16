@@ -12,43 +12,7 @@ namespace RentalWise.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-/* public class AuthController : ControllerBase
-{
-    private readonly IAuthService _authService;
 
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
-
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterDto dto)
-    {
-        try
-        {
-            var token = await _authService.RegisterAsync(dto);
-            return Ok(new { token });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto dto)
-    {
-        try
-        {
-            var token = await _authService.LoginAsync(dto);
-            return Ok(new { token });
-        }
-        catch (Exception ex)
-        {
-            return Unauthorized(new { error = ex.Message });
-        }
-    }
-} */
 
 public class AuthController : ControllerBase
 {
@@ -59,17 +23,42 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterDto dto)
+    [HttpPost("register/{role}")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto, [FromRoute] string role)
     {
-        var token = await _authService.RegisterAsync(dto);
-        return Ok(new { token });
+        try
+        {
+            var token = await _authService.RegisterAsync(dto, role);
+            return Ok(new { token });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ApplicationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto dto)
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var token = await _authService.LoginAsync(dto);
-        return Ok(new { token });
+        try
+        {
+            var token = await _authService.LoginAsync(dto);
+            return Ok(new { token });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
+
 }

@@ -65,22 +65,6 @@ namespace RentalWise.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tenants",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Tenants", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -187,11 +171,10 @@ namespace RentalWise.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LandLord",
+                name: "LandLords",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -203,9 +186,31 @@ namespace RentalWise.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LandLord", x => x.Id);
+                    table.PrimaryKey("PK_LandLords", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LandLord_AspNetUsers_UserId",
+                        name: "FK_LandLords_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tenants",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tenants", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tenants_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -270,7 +275,8 @@ namespace RentalWise.Infrastructure.Migrations
                     PropertyType = table.Column<int>(type: "int", nullable: false),
                     Features = table.Column<int>(type: "int", nullable: false),
                     PetsAllowed = table.Column<bool>(type: "bit", nullable: false),
-                    AvailableDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    AvailableDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LandlordId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -281,6 +287,11 @@ namespace RentalWise.Infrastructure.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Properties_LandLords_LandlordId",
+                        column: x => x.LandlordId,
+                        principalTable: "LandLords",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Properties_Suburbs_SuburbId",
                         column: x => x.SuburbId,
@@ -297,20 +308,82 @@ namespace RentalWise.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PropertyId = table.Column<int>(type: "int", nullable: false),
-                    TenantId = table.Column<int>(type: "int", nullable: false)
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LandlordId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Leases", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Leases_LandLords_LandlordId",
+                        column: x => x.LandlordId,
+                        principalTable: "LandLords",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_Leases_Properties_PropertyId",
                         column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Leases_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PropertyMedia",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MediaType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PropertyId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PropertyMedia", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PropertyMedia_Properties_PropertyId",
+                        column: x => x.PropertyId,
+                        principalTable: "Properties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Payments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LeaseId = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Method = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Payments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Payments_Leases_LeaseId",
+                        column: x => x.LeaseId,
+                        principalTable: "Leases",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Payments_Tenants_TenantId",
                         column: x => x.TenantId,
                         principalTable: "Tenants",
                         principalColumn: "Id",
@@ -362,9 +435,15 @@ namespace RentalWise.Infrastructure.Migrations
                 column: "RegionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LandLord_UserId",
-                table: "LandLord",
-                column: "UserId");
+                name: "IX_LandLords_UserId",
+                table: "LandLords",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Leases_LandlordId",
+                table: "Leases",
+                column: "LandlordId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Leases_PropertyId",
@@ -377,6 +456,21 @@ namespace RentalWise.Infrastructure.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Payments_LeaseId",
+                table: "Payments",
+                column: "LeaseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_TenantId",
+                table: "Payments",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Properties_LandlordId",
+                table: "Properties",
+                column: "LandlordId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Properties_SuburbId",
                 table: "Properties",
                 column: "SuburbId");
@@ -387,9 +481,20 @@ namespace RentalWise.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PropertyMedia_PropertyId",
+                table: "PropertyMedia",
+                column: "PropertyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Suburbs_DistrictId",
                 table: "Suburbs",
                 column: "DistrictId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tenants_UserId",
+                table: "Tenants",
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -411,13 +516,16 @@ namespace RentalWise.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "LandLord");
+                name: "Payments");
 
             migrationBuilder.DropTable(
-                name: "Leases");
+                name: "PropertyMedia");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Leases");
 
             migrationBuilder.DropTable(
                 name: "Properties");
@@ -426,10 +534,13 @@ namespace RentalWise.Infrastructure.Migrations
                 name: "Tenants");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "LandLords");
 
             migrationBuilder.DropTable(
                 name: "Suburbs");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Districts");

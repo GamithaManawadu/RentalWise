@@ -11,7 +11,7 @@ namespace RentalWise.Domain.Entities;
 public class Landlord
 {
     [Key]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     // Foreign Key to Identity User
     [Required]
@@ -20,8 +20,9 @@ public class Landlord
     [ForeignKey("UserId")]
     public ApplicationUser User { get; set; } = null!;
 
-    [Required]
-    public string FullName { get; set; } = null!;
+    
+    public string? FirstName { get; set; } 
+    public string? LastName { get; set; } 
     public string? Gender { get; set; }
     public string? ContactNumber { get; set; }
     public string? Address { get; set; }
@@ -29,6 +30,9 @@ public class Landlord
     public string? City { get; set; }
     public int? PostCode { get; set; }
 
-    
-    
+    public bool IsActive { get; set; } = true;
+
+    public ICollection<Property> Properties { get; set; } = new List<Property>();
+    public ICollection<Lease> Leases { get; set; } = new List<Lease>();
+
 }

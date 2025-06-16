@@ -23,25 +23,28 @@ public class AuthService : IAuthService
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly IConfiguration _config;
+    private readonly AppDbContext _context;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         RoleManager<ApplicationRole> roleManager,
-        IConfiguration config)
+        IConfiguration config,
+        AppDbContext context)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
         _config = config;
+        _context = context;
+       
     }
 
-    public async Task<string> RegisterAsync(RegisterDto dto)
+    public async Task<string> RegisterAsync(RegisterDto dto, string role)
     {
         var allowedRoles = new[] { "Tenant", "Landlord" };
 
-        // Validate selected role
-        if (!allowedRoles.Contains(dto.Role))
+        if (!allowedRoles.Contains(role))
             throw new ArgumentException("Invalid role selected");
 
         var existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -50,7 +53,7 @@ public class AuthService : IAuthService
 
         var user = new ApplicationUser
         {
-            UserName = dto.Username,
+            UserName = dto.Email,
             Email = dto.Email
         };
 
@@ -58,16 +61,31 @@ public class AuthService : IAuthService
         if (!result.Succeeded)
             throw new ApplicationException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        // Ensure role exists
-        if (!await _roleManager.RoleExistsAsync(dto.Role))
+        if (!await _roleManager.RoleExistsAsync(role))
+            await _roleManager.CreateAsync(new ApplicationRole(role));
+
+        await _userManager.AddToRoleAsync(user, role);
+
+        // Create corresponding profile entity
+        if (role == "Tenant")
         {
-            await _roleManager.CreateAsync(new ApplicationRole(dto.Role));
+            var tenant = new Tenant
+            {
+                UserId = user.Id
+            };
+            _context.Tenants.Add(tenant);
+        }
+        else if (role == "Landlord")
+        {
+            var landlord = new Landlord
+            {
+                UserId = user.Id
+            };
+            _context.LandLords.Add(landlord);
         }
 
-        // Assign role to user
-        await _userManager.AddToRoleAsync(user, dto.Role);
+        await _context.SaveChangesAsync();
 
-        // Return token (or user ID if token not implemented yet)
         return await GenerateTokenAsync(user);
     }
 
@@ -76,6 +94,14 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             throw new Exception("Invalid credentials");
+
+        var landlord = await _context.LandLords.FirstOrDefaultAsync(l => l.UserId == user.Id);
+        if (landlord != null && landlord.IsActive == false)
+            throw new Exception("Your account has been deactivated.");
+
+        var tenant = await _context.Tenants.FirstOrDefaultAsync(l => l.UserId == user.Id);
+        if (tenant != null && tenant.IsActive == false)
+            throw new Exception("Your account has been deactivated.");
 
         return await GenerateTokenAsync(user);
     }
@@ -91,7 +117,6 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Email, user.Email)
         };
 
-        // Add role claims
         var roles = await _userManager.GetRolesAsync(user);
         foreach (var role in roles)
         {
@@ -100,6 +125,7 @@ public class AuthService : IAuthService
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddHours(4),
             signingCredentials: creds

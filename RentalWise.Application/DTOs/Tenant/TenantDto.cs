@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace RentalWise.Application.DTOs.Tenant;
 
-public class CreateTenantDto
+public class TenantDto
 {
+    public Guid UserId { get; set; }
+    public Guid Id { get; set; }
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string? Gender { get; set; }

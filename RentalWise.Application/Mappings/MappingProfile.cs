@@ -34,19 +34,18 @@ namespace RentalWise.Application.Mappings
             CreateMap<Region, RegionDto>();
 
             //tenant
-            CreateMap<Tenant, TenantDto>();
             CreateMap<CreateTenantDto, Tenant>();
-            CreateMap<UpdateTenantDto, Tenant>();
+            CreateMap<Tenant, TenantDto>();
+            CreateMap<UpdateTenantDto, Tenant>()
+             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            // The above condition ignores nulls during update, useful for PATCH-like behavior
 
             // CreateLandlordDto -> Landlord
             CreateMap<CreateLandlordDto, Landlord>();
-
-            // Landlord -> LandlordResponseDto
+                  
             CreateMap<Landlord, LandlordDto>();
-
-            // UpdateLandlordDto -> Landlord (for updating existing landlord)
             CreateMap<UpdateLandlordDto, Landlord>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+              .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             // The above condition ignores nulls during update, useful for PATCH-like behavior
         }
     }

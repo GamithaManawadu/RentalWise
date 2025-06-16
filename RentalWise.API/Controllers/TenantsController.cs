@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RentalWise.Application.DTOs.Landlord;
 using RentalWise.Application.DTOs.Tenant;
 using RentalWise.Domain.Entities;
 using RentalWise.Infrastructure.Persistence;
@@ -7,6 +10,9 @@ using System.Security.Claims;
 
 namespace RentalWise.API.Controllers;
 
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Tenant")]
 public class TenantsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -19,64 +25,98 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateTenantDto model)
+    public async Task<IActionResult> AddTenantProfile([FromBody] CreateTenantDto dto)
     {
-        if (model == null) return BadRequest();
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var tenant = _mapper.Map<Tenant>(model);
-        tenant.UserId = userId;
+        var existingProfile = await _context.Tenants.FirstOrDefaultAsync(l => l.UserId == userId);
+        if (existingProfile != null)
+            return Conflict("Profile already exists for this user.");
 
-        _context.Tenants.Add(tenant);
+        var profile = _mapper.Map<Tenant>(dto);
+        profile.UserId = userId;
+
+        _context.Tenants.Add(profile);
         await _context.SaveChangesAsync();
 
-        var dto = _mapper.Map<TenantDto>(tenant);
-        return CreatedAtAction(nameof(GetById), new { id = tenant.Id }, dto);
+        var resultDto = _mapper.Map<TenantDto>(profile);
+        return CreatedAtAction(nameof(GetMyProfile), new { id = profile.Id }, resultDto);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<TenantDto>> GetById(int id)
+
+    [HttpGet]
+    public async Task<IActionResult> GetMyProfile()
     {
-        var tenant = await _context.Tenants.FindAsync(id);
-        if (tenant == null) return NotFound();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (tenant.UserId != userId) return Forbid();
+        var profile = await _context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId);
 
-        return Ok(_mapper.Map<TenantDto>(tenant));
+        if (profile == null)
+            return NotFound("No profile found.");
+
+        var responseDto = _mapper.Map<TenantDto>(profile);
+        return Ok(responseDto);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateTenantDto model)
+
+    // Update tenant profile
+    [HttpPut]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateTenantDto dto)
     {
-        if (model == null) return BadRequest();
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var tenant = await _context.Tenants.FindAsync(id);
-        if (tenant == null) return NotFound();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (tenant.UserId != userId) return Forbid();
+        var profile = await _context.Tenants.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (profile == null)
+            return NotFound("Profile not found.");
 
-        _mapper.Map(model, tenant);
+        // Map only updated fields from DTO to entity
+        _mapper.Map(dto, profile);
+
+        _context.Tenants.Update(profile);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        var updatedDto = _mapper.Map<TenantDto>(profile);
+        return Ok(updatedDto);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteProfile()
     {
-        var tenant = await _context.Tenants.FindAsync(id);
-        if (tenant == null) return NotFound();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (tenant.UserId != userId) return Forbid();
+        var tenant = await _context.Tenants
+        .Include(t => t.Leases)
+        .FirstOrDefaultAsync(t => t.UserId == userId);
 
-        _context.Tenants.Remove(tenant);
+        var profile = await _context.Tenants.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (profile == null)
+            return NotFound("Tenant profile not found.");
+
+        if (tenant.Leases.Any())
+            return BadRequest("Cannot delete profile. You are associated with one or more leases.");
+
+        // Soft delete
+        tenant.IsActive = false;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return NoContent(); // 204 - Successfully deleted
     }
 }

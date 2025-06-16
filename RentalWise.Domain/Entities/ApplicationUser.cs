@@ -11,9 +11,11 @@ public class ApplicationUser : IdentityUser<Guid>
 {
     // Common Fields
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-   
-    
 
-    
-    
+
+    // One-to-One navigation
+    public Landlord? Landlord { get; set; }
+    public Tenant? Tenant { get; set; }
+
+
 }
