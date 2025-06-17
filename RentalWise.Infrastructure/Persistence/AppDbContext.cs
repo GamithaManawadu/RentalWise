@@ -26,6 +26,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
         base.OnModelCreating(modelBuilder);
 
+        // Only show active landlords
+        modelBuilder.Entity<Landlord>()
+            .HasQueryFilter(l => l.IsActive);
+
+        // Only show active properties
+        modelBuilder.Entity<Property>()
+            .HasQueryFilter(p => p.IsActive);
+
         // Property - decimal configuration
         modelBuilder.Entity<Property>()
             .Property(p => p.RentAmount)
@@ -37,13 +45,45 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
 
         modelBuilder.Entity<Payment>()
             .Property(p => p.Amount)
-            .HasPrecision(18, 2); 
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete from Identity
+
+        modelBuilder.Entity<Property>()
+            .HasOne(p => p.Landlord)
+            .WithMany(l => l.Properties)
+            .HasForeignKey(p => p.LandlordId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Landlord>()
+            .HasOne(l => l.User)
+            .WithOne()
+            .HasForeignKey<Landlord>(l => l.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Tenant>()
+            .HasOne(t => t.User)
+            .WithOne()
+            .HasForeignKey<Tenant>(t => t.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PropertyMedia>()
+            .HasOne(pm => pm.Property)
+            .WithMany(p => p.Media)
+            .HasForeignKey(pm => pm.PropertyId)
+            .IsRequired(false)  // Make navigation optional
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Add Fluent API configuration here if needed
         modelBuilder.Entity<Lease>()
             .HasOne(l => l.Property)
             .WithMany(p => p.Leases)
             .HasForeignKey(l => l.PropertyId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict); //prevent deleting a Tenant or Property that has active leases
 
         modelBuilder.Entity<Lease>()
@@ -93,5 +133,34 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
 
 
 
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            // Soft delete for Landlord
+            if (entry.Entity is Landlord landlord && entry.State == EntityState.Deleted)
+            {
+                entry.State = EntityState.Modified;
+                landlord.IsActive = false;
+
+                // Deactivate related properties
+                var relatedProperties = Properties.Where(p => p.UserId == landlord.UserId);
+                foreach (var prop in relatedProperties)
+                {
+                    prop.IsActive = false;
+                }
+            }
+
+            // Soft delete for Property
+            if (entry.Entity is Property property && entry.State == EntityState.Deleted)
+            {
+                entry.State = EntityState.Modified;
+                property.IsActive = false;
+            }
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

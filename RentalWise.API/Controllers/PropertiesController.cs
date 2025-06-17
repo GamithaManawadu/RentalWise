@@ -94,9 +94,16 @@ public class PropertiesController : ControllerBase
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Invalid user ID.");
 
+        // Find landlord associated with this user
+        var landlord = await _context.LandLords.FirstOrDefaultAsync(l => l.UserId == userId);
+        if (landlord == null)
+            return BadRequest("Landlord profile not found for this user.");
+
         // Map from DTO to Entity
         var property = _mapper.Map<Property>(model);
+
         property.UserId = userId; // assign manually
+        property.LandlordId = landlord.Id;
 
         if (model.RentAmount < 0)
         {
@@ -211,14 +218,26 @@ public class PropertiesController : ControllerBase
         if (property == null)
             return NotFound("Property not found or not owned by user.");
 
-        // Delete media from Cloudinary
-        foreach (var media in property.Media)
-        {
-            DeletionParams deletionParams = new DeletionParams(media.PublicId);
-            await _mediaUploadService.DeleteMediaAsync(deletionParams);
-        }
+        var today = DateTime.UtcNow.Date;
+        if (property.Leases.Any(l => l.EndDate >= today))
+            return BadRequest("Cannot delete property. It has active leases.");
 
-        _context.Properties.Remove(property);
+        /* if (isAdmin)
+         {
+        // Delete media from Cloudinary
+         foreach (var media in property.Media)
+         {
+             DeletionParams deletionParams = new DeletionParams(media.PublicId);
+             await _mediaUploadService.DeleteMediaAsync(deletionParams);
+         }
+             // Perform a hard delete
+             _context.Properties.Remove(property);
+         }*/
+
+        
+
+            _context.Properties.Remove(property);
+        
         await _context.SaveChangesAsync();
 
         return NoContent();

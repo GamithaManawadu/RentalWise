@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalWise.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using RentalWise.Infrastructure.Persistence;
 namespace RentalWise.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250617030618_boolactiveforTenant")]
+    partial class boolactiveforTenant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -398,10 +401,7 @@ namespace RentalWise.Infrastructure.Migrations
                     b.Property<int>("Features")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("LandlordId")
+                    b.Property<Guid?>("LandlordId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -624,7 +624,8 @@ namespace RentalWise.Infrastructure.Migrations
                     b.HasOne("RentalWise.Domain.Entities.Property", "Property")
                         .WithMany("Leases")
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("RentalWise.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Leases")
@@ -658,11 +659,9 @@ namespace RentalWise.Infrastructure.Migrations
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Property", b =>
                 {
-                    b.HasOne("RentalWise.Domain.Entities.Landlord", "Landlord")
+                    b.HasOne("RentalWise.Domain.Entities.Landlord", null)
                         .WithMany("Properties")
-                        .HasForeignKey("LandlordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LandlordId");
 
                     b.HasOne("RentalWise.Domain.Entities.Suburb", "Suburb")
                         .WithMany()
@@ -673,10 +672,8 @@ namespace RentalWise.Infrastructure.Migrations
                     b.HasOne("RentalWise.Domain.Entities.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Landlord");
 
                     b.Navigation("Suburb");
 
@@ -688,7 +685,8 @@ namespace RentalWise.Infrastructure.Migrations
                     b.HasOne("RentalWise.Domain.Entities.Property", "Property")
                         .WithMany("Media")
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Property");
                 });

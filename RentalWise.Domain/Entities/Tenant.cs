@@ -11,6 +11,7 @@ namespace RentalWise.Domain.Entities;
 public class Tenant
 {
     [Key]
+    [ForeignKey("UserId")]
     public Guid Id { get; set; }
 
     // Foreign Key to Identity User

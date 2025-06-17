@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalWise.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using RentalWise.Infrastructure.Persistence;
 namespace RentalWise.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250617091012_updateLandlordId")]
+    partial class updateLandlordId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -246,8 +249,7 @@ namespace RentalWise.Infrastructure.Migrations
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Landlord", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Address")
@@ -277,13 +279,7 @@ namespace RentalWise.Infrastructure.Migrations
                     b.Property<string>("Suburb")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasKey("UserId");
 
                     b.ToTable("LandLords");
                 });
@@ -302,7 +298,7 @@ namespace RentalWise.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("LandlordId")
+                    b.Property<Guid?>("LandlordUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Notes")
@@ -323,7 +319,7 @@ namespace RentalWise.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LandlordId");
+                    b.HasIndex("LandlordUserId");
 
                     b.HasIndex("PropertyId");
 
@@ -401,9 +397,6 @@ namespace RentalWise.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("LandlordId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -428,8 +421,6 @@ namespace RentalWise.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LandlordId");
 
                     b.HasIndex("SuburbId");
 
@@ -619,7 +610,7 @@ namespace RentalWise.Infrastructure.Migrations
                 {
                     b.HasOne("RentalWise.Domain.Entities.Landlord", null)
                         .WithMany("Leases")
-                        .HasForeignKey("LandlordId");
+                        .HasForeignKey("LandlordUserId");
 
                     b.HasOne("RentalWise.Domain.Entities.Property", "Property")
                         .WithMany("Leases")
@@ -658,12 +649,6 @@ namespace RentalWise.Infrastructure.Migrations
 
             modelBuilder.Entity("RentalWise.Domain.Entities.Property", b =>
                 {
-                    b.HasOne("RentalWise.Domain.Entities.Landlord", "Landlord")
-                        .WithMany("Properties")
-                        .HasForeignKey("LandlordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("RentalWise.Domain.Entities.Suburb", "Suburb")
                         .WithMany()
                         .HasForeignKey("SuburbId")
@@ -672,6 +657,12 @@ namespace RentalWise.Infrastructure.Migrations
 
                     b.HasOne("RentalWise.Domain.Entities.ApplicationUser", "User")
                         .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalWise.Domain.Entities.Landlord", "Landlord")
+                        .WithMany("Properties")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();

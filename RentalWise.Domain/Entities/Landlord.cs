@@ -11,14 +11,14 @@ namespace RentalWise.Domain.Entities;
 public class Landlord
 {
     [Key]
-    public Guid Id { get; set; }
+    
+   public Guid Id { get; set; } = Guid.NewGuid();
 
     // Foreign Key to Identity User
     [Required]
     public Guid UserId { get; set; }
 
-    [ForeignKey("UserId")]
-    public ApplicationUser User { get; set; } = null!;
+   public ApplicationUser User { get; set; } = null!;
 
     
     public string? FirstName { get; set; } 

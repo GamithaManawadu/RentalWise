@@ -95,13 +95,25 @@ public class AuthService : IAuthService
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             throw new Exception("Invalid credentials");
 
-        var landlord = await _context.LandLords.FirstOrDefaultAsync(l => l.UserId == user.Id);
-        if (landlord != null && landlord.IsActive == false)
-            throw new Exception("Your account has been deactivated.");
+        // Check if user is a landlord
+        var landlord = await _context.LandLords
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(l => l.UserId == user.Id);
 
-        var tenant = await _context.Tenants.FirstOrDefaultAsync(l => l.UserId == user.Id);
-        if (tenant != null && tenant.IsActive == false)
-            throw new Exception("Your account has been deactivated.");
+        if (landlord != null && !landlord.IsActive)
+            throw new Exception("Your landlord account has been deactivated.");
+
+        // Check if user is a tenant
+        var tenant = await _context.Tenants
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.UserId == user.Id);
+
+        if (tenant != null && !tenant.IsActive)
+            throw new Exception("Your tenant account has been deactivated.");
+
+        // If user has a profile, they must be active
+        if (landlord == null && tenant == null)
+            throw new Exception("No valid user role assigned. Contact support.");
 
         return await GenerateTokenAsync(user);
     }

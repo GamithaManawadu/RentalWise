@@ -20,6 +20,13 @@ public class Property
     [ForeignKey("UserId")]
     public ApplicationUser User { get; set; } = null!;
 
+    // Optional: Navigation to landlord via UserId
+    [Required]
+    public Guid LandlordId { get; set; }
+
+    [ForeignKey("LandlordId")]
+    public Landlord Landlord { get; set; } = null!;
+
     public string Name { get; set; } = null!;
     public string Address { get; set; } = null!;
     public int SuburbId { get; set; }
@@ -36,6 +43,8 @@ public class Property
 
     public bool PetsAllowed { get; set; } = false;
     public DateTime AvailableDate { get; set; }
+    public bool IsActive { get; set; } = true;
+
 
     public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
 

@@ -114,8 +114,8 @@ public class LandlordController: ControllerBase
         if (hasLeases)
             return BadRequest("Cannot delete profile. You have active leases associated with your properties.");
 
-        // Soft delete
-        landlord.IsActive = false;
+        _context.LandLords.Remove(landlord);
+
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204 - Successfully deleted
