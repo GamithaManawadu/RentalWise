@@ -135,6 +135,12 @@ public class AuthService : IAuthService
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        //Add the first role as a flat claim for easier access on the frontend
+        if (roles.Any())
+        {
+            claims.Add(new Claim("role", roles.First())); // Custom claim 
+        }
+
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],

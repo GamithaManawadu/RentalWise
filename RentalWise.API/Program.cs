@@ -17,6 +17,19 @@ using RentalWise.Infrastructure.SeedData;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Allow CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -112,7 +125,10 @@ builder.Services.AddSingleton(s =>
 });
 builder.Services.AddScoped<IMediaUploadService, MediaUploadService>();
 
+
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
 
 // Seed roles on startup
 using (var scope = app.Services.CreateScope())

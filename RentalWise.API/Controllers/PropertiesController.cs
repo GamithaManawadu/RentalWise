@@ -13,7 +13,7 @@ namespace RentalWise.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Landlord")]
+
 public class PropertiesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -29,7 +29,7 @@ public class PropertiesController : ControllerBase
 
     
     [HttpGet]
-    [Authorize(Roles = "Landlord")]
+    
     public async Task<ActionResult<IEnumerable<PropertyDto>>> GetAll(int pageNumber = 1, int pageSize = 10) //pagination 10 per page
     {
         var properties = await _context.Properties
@@ -76,7 +76,7 @@ public class PropertiesController : ControllerBase
 
     // POST: api/properties
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Landlord")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] CreatePropertyDto model)
     {
@@ -204,7 +204,7 @@ public class PropertiesController : ControllerBase
 
     // DELETE: api/properties/5
     [HttpDelete("{id}")]
-    [Authorize]
+    [Authorize(Roles = "Landlord")]
     public async Task<IActionResult> Delete(int id)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
