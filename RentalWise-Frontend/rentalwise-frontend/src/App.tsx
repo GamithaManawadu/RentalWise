@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
+import { useLocation } from 'react-router-dom';
+import HomePage from './pages/Home';
 import Login from './pages/Login';
 import RoleSelect from './pages/RoleSelect';
 import RegisterLandlord from './pages/Landlord/RegisterLandlord';
@@ -8,14 +9,22 @@ import LandlordDashboard from './pages/Landlord/Dashboard';
 import TenantDashboard from './pages/Tenant/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
+import BannerwithSearchSection from './components/BannerwithSearch';
+
 import './App.css'
 
 function App() {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+  const hideNavbarRoutes = ['/login', '/register', '/register/landlord', '/register/tenant'];
+  const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
+
   return (
     <>
-      <Navbar />
+      {shouldShowNavbar && <Navbar />}
+      {isHomePage && <BannerwithSearchSection />}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RoleSelect />} />
         <Route path="/register/landlord" element={<RegisterLandlord />} />
