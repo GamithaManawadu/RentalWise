@@ -1,70 +1,47 @@
-import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-import { useLocation } from 'react-router-dom';
-
-// Types
-interface DecodedToken {
-  name?: string;
-  email?: string;
-  role?: string;
-  exp?: number;
-}
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; //use our new context
 
 interface DropdownItem {
   label: string;
   path: string;
   isButton?: boolean;
+  roles?: string[];
 }
 
-
-
 export default function Navbar() {
-
   const location = useLocation();
-const isHomePage = location.pathname === '/';
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState('');
+  const isHomePage = location.pathname === '/';
+  const { user, logout } = useAuth(); //Pull from AuthContext
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const dropdownItems: DropdownItem[] = [
-    { label: 'Saved homes', path: '/saved-homes' },
-    { label: 'Saved searches', path: '/saved-searches' },
-    { label: 'Inbox', path: '/inbox' },
-    { label: 'Manage tours', path: '/manage-tours' },
-    { label: 'Recently Viewed', path: '/recently-viewed' },
-    { label: 'Your team', path: '/your-team' },
-    { label: 'Your home', path: '/your-home' },
-    { label: 'Renter Hub', path: '/renter-hub' },
-    { label: 'Account settings', path: '/account-settings' },
+  const isAuthenticated = !!user;
+  const userRole = user?.role || '';
+  const userName = user?.email || 'Account';
+
+  const baseDropdownItems: DropdownItem[] = [
+    { label: 'Saved homes', path: 'saved-homes' },
+    { label: 'Saved searches', path: 'saved-searches' },
+    { label: 'Inbox', path: 'inbox' },
+    { label: 'Manage tours', path: 'manage-tours', roles: ['Landlord'] },
+    { label: 'Recently Viewed', path: 'recently-viewed' },
+    { label: 'Your team', path: 'your-team', roles: ['Landlord'] },
+    { label: 'Your home', path: 'your-home' },
+    { label: 'Renter Hub', path: 'renter-hub', roles: ['Tenant'] },
+    { label: 'Account settings', path: 'profile' },
     { label: 'Sign out', path: '', isButton: true },
   ];
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        setIsAuthenticated(true);
-        try {
-          const decoded: DecodedToken = jwtDecode(token);
-          setUserName(decoded.name || decoded.email || 'Account');
-        } catch (err) {
-          console.error('Invalid token:', err);
-        }
-      } else {
-        setIsAuthenticated(false);
-        setUserName('');
-      }
-    };
+  const dropdownItems: DropdownItem[] = baseDropdownItems
+    .filter((item) => !item.roles || item.roles.includes(userRole))
+    .map((item) => ({
+      ...item,
+      path: item.isButton || !userRole ? item.path : `/${userRole.toLowerCase()}/${item.path}`,
+    }));
 
-    checkAuth();
-    window.addEventListener('authChanged', checkAuth);
-    return () => window.removeEventListener('authChanged', checkAuth);
-  }, []);
-
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -75,14 +52,8 @@ const isHomePage = location.pathname === '/';
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.dispatchEvent(new Event('authChanged'));
-    setDropdownOpen(false);
-  };
-
   return (
-    <nav className={`w-full ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'}flex flex-col`}>
+    <nav className={`w-full ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'} flex flex-col`}>
       <div className="px-4 md:px-8 py-6 flex items-center justify-between border-b border-white/30 relative bg-transparent md:bg-white">
         <button
           className="block md:hidden text-white md:text-gray-700 text-2xl"
@@ -95,7 +66,7 @@ const isHomePage = location.pathname === '/';
           <Link to="/agents" className="hover:text-blue-700">Buy</Link>
           <Link to="/tours" className="hover:text-blue-700">Rent</Link>
           <Link to="/loans" className="hover:text-blue-700">Sell</Link>
-          <Link to="/homes" className="hover:text-blue-700">Homes</Link>
+          <Link to="/homes" className="hover:text-blue-700">Agent</Link>
         </div>
 
         <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -103,9 +74,9 @@ const isHomePage = location.pathname === '/';
         </div>
 
         <div className="hidden md:flex gap-6 items-center text-lg font-medium mr-12 text-gray-700">
-          <Link to="/agents" className="hover:text-blue-700">Agents</Link>
-          <Link to="/tours" className="hover:text-blue-700">Tours</Link>
-          <Link to="/loans" className="hover:text-blue-700">Loans</Link>
+          <Link to="/landlord" className="hover:text-blue-700">Manage Rentals</Link>
+          <Link to="/tours" className="hover:text-blue-700">Help</Link>
+
           {!isAuthenticated ? (
             <Link to="/login" className="hover:text-blue-700">Sign In</Link>
           ) : (
@@ -123,7 +94,10 @@ const isHomePage = location.pathname === '/';
                     item.isButton ? (
                       <button
                         key={item.label}
-                        onClick={handleLogout}
+                        onClick={() => {
+                          logout(); // 🔐 calls AuthContext logout
+                          setDropdownOpen(false);
+                        }}
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
                       >
                         {item.label}
@@ -171,7 +145,7 @@ const isHomePage = location.pathname === '/';
                 <button
                   key={item.label}
                   onClick={() => {
-                    handleLogout();
+                    logout();
                     setMobileMenuOpen(false);
                   }}
                   className="text-left"

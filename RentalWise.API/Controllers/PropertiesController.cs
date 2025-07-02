@@ -27,17 +27,18 @@ public class PropertiesController : ControllerBase
         _mediaUploadService = mediaUploadService;
     }
 
-    
+
     [HttpGet]
-    
+
     public async Task<ActionResult<IEnumerable<PropertyDto>>> GetAll(int pageNumber = 1, int pageSize = 10) //pagination 10 per page
     {
         var properties = await _context.Properties
+            .Include(p => p.Suburb)
        .Include(p => p.Media)
        .Skip((pageNumber - 1) * pageSize)
        .Take(pageSize)
        .ToListAsync();
-       
+
         var result = _mapper.Map<List<PropertyDto>>(properties);
 
         return Ok(properties);
@@ -52,6 +53,9 @@ public class PropertiesController : ControllerBase
             return Unauthorized("Invalid user ID.");
 
         var query = _context.Properties
+            .Include(p => p.Suburb)
+                .ThenInclude(s => s.District)
+                    .ThenInclude(d => d.Region)
             .Include(p => p.Media)
             .Where(p => p.UserId == userId) //  Guid FK
             .OrderByDescending(p => p.CreatedAt); // Optional ordering
@@ -72,6 +76,27 @@ public class PropertiesController : ControllerBase
             PageSize = pageSize,
             Items = result
         });
+    }
+
+    // GET: api/properties/5
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Landlord")]
+    public async Task<ActionResult<PropertyDto>> GetById(int id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Invalid user ID.");
+
+        var property = await _context.Properties
+            .Include(p => p.Media)
+            .Include(p => p.Suburb)
+            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+
+        if (property == null)
+            return NotFound("Property not found or not owned by this user.");
+
+        var result = _mapper.Map<PropertyDto>(property);
+        return Ok(result);
     }
 
     // POST: api/properties
@@ -141,41 +166,75 @@ public class PropertiesController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(int id, [FromForm] UpdatePropertyDto model)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdString, out var userId))
-            return Unauthorized("Invalid user ID.");
-
-        if (model == null)
-            return BadRequest();
-
-        var property = await _context.Properties
-            .Include(p => p.Media)
-            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
-
-        if (property == null)
-            return NotFound("Property not found or not owned by user.");
-
-        _mapper.Map(model, property);
-
-        if (model.RentAmount < 0)
+        try
         {
-            ModelState.AddModelError("RentAmount", "Rent amount cannot be negative.");
-            return BadRequest(ModelState);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdString, out var userId))
+                return Unauthorized("Invalid user ID.");
+
+            if (model == null)
+                return BadRequest("Model is null. Check if form-data keys match UpdatePropertyDto.");
+
+            var property = await _context.Properties
+                .Include(p => p.Media)
+                .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+
+            if (property == null)
+                return NotFound("Property not found or not owned by user.");
+
+            _mapper.Map(model, property);
+
+            if (model.RentAmount < 0)
+            {
+                ModelState.AddModelError("RentAmount", "Rent amount cannot be negative.");
+                return BadRequest(ModelState);
+            }
+
+            // Initialize Media if null (defensive)
+            property.Media ??= new List<PropertyMedia>();
+
+            //1. Handle removed media
+            if (model.RemovedMediaIds != null && model.RemovedMediaIds.Any())
+            {
+                var mediaToRemove = property.Media
+                    .Where(m => model.RemovedMediaIds.Contains(m.Id))
+                    .ToList();
+
+                if (mediaToRemove.Any())
+                {
+                    await _mediaUploadService.DeleteMediaOneByOneAsync(mediaToRemove);
+                    _context.PropertyMedia.RemoveRange(mediaToRemove);
+
+                    foreach (var media in mediaToRemove)
+                        property.Media.Remove(media);
+                }
+            }
+
+            // 2. Upload new media
+            int existingImageCount = property.Media.Count(m => m.MediaType == "image");
+            bool videoAlreadyExists = property.Media.Any(m => m.MediaType == "video");
+
+            var newMedia = await _mediaUploadService.UploadPropertyMediaAsync(
+                model.Images ?? new List<IFormFile>(),
+                model.Video,
+                existingImageCount,
+                videoAlreadyExists
+            );
+
+            foreach (var media in newMedia)
+            {
+                media.PropertyId = property.Id;
+                property.Media.Add(media);
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
-
-        int existingImageCount = property.Media.Count(m => m.MediaType == "image");
-        bool videoAlreadyExists = property.Media.Any(m => m.MediaType == "video");
-
-        var newMedia = await _mediaUploadService.UploadPropertyMediaAsync(model.NewImages, model.NewVideo, existingImageCount, videoAlreadyExists);
-
-        foreach (var media in newMedia)
+        catch (Exception ex)
         {
-            media.PropertyId = property.Id;
-            property.Media.Add(media);
+            Console.WriteLine("❌ UPDATE PROPERTY ERROR: " + ex.Message);
+            return StatusCode(500, $"Server Error: {ex.Message}");
         }
-
-        await _context.SaveChangesAsync();
-        return NoContent();
     }
 
 
@@ -222,24 +281,38 @@ public class PropertiesController : ControllerBase
         if (property.Leases.Any(l => l.EndDate >= today))
             return BadRequest("Cannot delete property. It has active leases.");
 
-        /* if (isAdmin)
-         {
-        // Delete media from Cloudinary
-         foreach (var media in property.Media)
-         {
-             DeletionParams deletionParams = new DeletionParams(media.PublicId);
-             await _mediaUploadService.DeleteMediaAsync(deletionParams);
-         }
-             // Perform a hard delete
-             _context.Properties.Remove(property);
-         }*/
+        try
+        {
+            // Delete associated media from Cloudinary
+            if (property.Media != null && property.Media.Any())
+            {
+                await _mediaUploadService.DeleteMediaOneByOneAsync(property.Media);
+            }
 
-        
+            /* if (isAdmin)
+             {
+            // Delete media from Cloudinary
+             foreach (var media in property.Media)
+             {
+                 DeletionParams deletionParams = new DeletionParams(media.PublicId);
+                 await _mediaUploadService.DeleteMediaAsync(deletionParams);
+             }
+                 // Perform a hard delete
+                 _context.Properties.Remove(property);
+             }*/
+
+
 
             _context.Properties.Remove(property);
-        
-        await _context.SaveChangesAsync();
 
-        return NoContent();
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ DELETE PROPERTY ERROR: " + ex.Message);
+            return StatusCode(500, "Server error during deletion.");
+        }
     }
 }

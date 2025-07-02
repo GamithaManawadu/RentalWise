@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { Eye, EyeOff } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple, FaFacebook } from 'react-icons/fa';
+import { FaFacebook } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+
 
 type DecodedToken = {
     role: string;
@@ -33,43 +35,50 @@ export default function Login() {
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+    const { login } = useAuth(); // Destructure login method from context
 
-        try {
-            const response = await api.post('/Auth/login', {
-                email,
-                password,
-            });
+const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-            const token = response.data.token;
+    try {
+        const response = await api.post('/Auth/login', {
+            email,
+            password,
+        });
 
-            if (!token || typeof token !== 'string') {
-                setError('Invalid token received from server');
-                return;
-            }
+        const token = response.data.token;
 
-            localStorage.setItem('token', token);
-            const decoded: DecodedToken = jwtDecode(token);
-            const role = decoded?.role?.toLowerCase();
-
-            if (role === 'landlord') {
-                navigate('/landlord/dashboard');
-            } else if (role === 'tenant') {
-                navigate('/tenant/dashboard');
-            } else {
-                navigate('/');
-            }
-        } catch (err: any) {
-            console.error(err);
-            setError('Invalid email or password');
+        if (!token || typeof token !== 'string') {
+            setError('Invalid token received from server');
+            return;
         }
-    };
+
+        login(token); // This sets user context, fires authChanged, stores token
+
+        const decoded: DecodedToken = jwtDecode(token);
+        const role = decoded?.role?.toLowerCase();
+
+        if (role === 'landlord') {
+            navigate('/landlord/dashboard');
+        } else if (role === 'tenant') {
+            navigate('/tenant/dashboard');
+        } else {
+            navigate('/');
+        }
+    } catch (err: any) {
+        console.error(err);
+        setError('Invalid email or password');
+    }
+};
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6">
-            <h1 className="text-3xl font-bold mb-8 text-center">Sign in</h1>
+        <div className="min-h-screen flex flex-col md:flex-row">
+            {/* Left: Form Section */}
+            <div className="w-full md:w-1/3 flex justify-center items-center px-6 py-12">
+        <div className=" max-w-md w-full mt-0 p-6">
+        <Link to="/" className="text-2xl font-bold text-blue-700">RentalWise</Link>
+            <h1 className="text-2xl font-bold mt-3 mb-8 text-left">Sign in</h1>
             
             {error && <div className="text-red-600 mb-4 text-center">{error}</div>}
             
@@ -148,5 +157,16 @@ export default function Login() {
                 </p>
             </div>
         </div>
+        </div>
+
+        {/* Right: Image Section */}
+      <div className="w-full md:w-2/3 hidden md:block">
+        <img
+          src="/images/login-side.jpg"
+          alt="Welcome to RentalWise"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </div>
     );
 }

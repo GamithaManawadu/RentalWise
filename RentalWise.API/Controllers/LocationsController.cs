@@ -56,4 +56,23 @@ public class LocationsController : ControllerBase
         var result = _mapper.Map<List<SuburbDto>>(suburbs);
         return Ok(result);
     }
+
+    // GET: /api/locations/suburbs/search?name=Grafton
+    [HttpGet("suburbs/search")]
+    public async Task<ActionResult<SuburbDto>> GetSuburbByName([FromQuery] string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return BadRequest("Name is required.");
+
+        var suburb = await _context.Suburbs
+            .Include(s => s.District)
+            .ThenInclude(d => d.Region)
+            .FirstOrDefaultAsync(s => s.Name.ToLower() == name.ToLower());
+
+        if (suburb == null)
+            return NotFound();
+
+        var result = _mapper.Map<SuburbDto>(suburb);
+        return Ok(result);
+    }
 }

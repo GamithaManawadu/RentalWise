@@ -27,6 +27,8 @@ public class UpdatePropertyDto
     public bool PetsAllowed { get; set; }
     public DateTime AvailableDate { get; set; }
 
-    public List<IFormFile>? NewImages { get; set; }
-    public IFormFile? NewVideo { get; set; }
+    public List<IFormFile>? Images { get; set; }
+    public IFormFile? Video { get; set; }
+
+    public List<int>? RemovedMediaIds { get; set; }
 }

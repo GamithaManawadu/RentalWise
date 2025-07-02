@@ -1,32 +1,27 @@
-import { Navigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import { Navigate, useLocation } from 'react-router-dom';
 import type { JSX } from 'react';
+import { useAuth } from '../context/AuthContext'; // ✅ use real context
 
 interface Props {
-    children: JSX.Element;
-    requiredRole: 'landlord' | 'tenant';
+  children: JSX.Element;
+  requiredRole: 'landlord' | 'tenant';
 }
 
-type DecodedToken = {
-    role: string;
-    exp: number; // optional: for expiry checks
-};
-
 export default function PrivateRoute({ children, requiredRole }: Props) {
-    const token = localStorage.getItem('token');
+  const { user } = useAuth();
+  const location = useLocation();
 
-    if (!token) return <Navigate to="/login" />;
+  if (!user) {
+    // Not logged in → redirect to login and preserve path
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    try {
-        const decoded: DecodedToken = jwtDecode(token);
-        const userRole = decoded.role.toLowerCase();
+  const userRole = user.role.toLowerCase();
 
-        if (userRole !== requiredRole) {
-            return <Navigate to="/" />;
-        }
+  if (userRole !== requiredRole) {
+    // Logged in but wrong role
+    return <Navigate to="/" replace />;
+  }
 
-        return children;
-    } catch (err) {
-        return <Navigate to="/login" />;
-    }
+  return children;
 }
