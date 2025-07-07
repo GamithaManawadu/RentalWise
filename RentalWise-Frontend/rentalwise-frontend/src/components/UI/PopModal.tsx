@@ -33,7 +33,7 @@ export default function PopModal({ isOpen, onClose, children, title, className }
     >
       {animateIn && (
         <div
-          className={`bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 relative transform transition-transform duration-300 ${
+          className={`bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto p-6 relative transform transition-transform duration-300 ${
             animateIn ? 'scale-100' : 'scale-95'
           } ${className}`}
         >

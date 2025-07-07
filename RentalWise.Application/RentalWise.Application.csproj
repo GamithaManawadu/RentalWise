@@ -10,7 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RentalWise.Domain\RentalWise.Domain.csproj" />
-    <ProjectReference Include="..\RentalWise.Infrastructure\RentalWise.Infrastructure.csproj" />
+	  <ProjectReference Include="..\RentalWise.Infrastructure\RentalWise.Infrastructure.csproj" />
+    
   </ItemGroup>
 
   <PropertyGroup>

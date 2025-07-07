@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; //use our new context
+import { FiMenu, FiX } from 'react-icons/fi';
 
 interface DropdownItem {
   label: string;
@@ -52,6 +53,18 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  //mobile sidebar closes if the screen is resized to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+  
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <nav className={`w-full ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'} flex flex-col`}>
       <div className="px-4 md:px-8 py-6 flex items-center justify-between border-b border-white/30 relative bg-transparent md:bg-white">
@@ -59,12 +72,12 @@ export default function Navbar() {
           className="block md:hidden text-white md:text-gray-700 text-2xl"
           onClick={() => setMobileMenuOpen(true)}
         >
-          ☰
+         <FiMenu/>
         </button>
 
         <div className="hidden md:flex gap-6 items-center text-lg font-medium ml-12 text-gray-700">
           <Link to="/agents" className="hover:text-blue-700">Buy</Link>
-          <Link to="/tours" className="hover:text-blue-700">Rent</Link>
+          <Link to="/rental" className="hover:text-blue-700">Rent</Link>
           <Link to="/loans" className="hover:text-blue-700">Sell</Link>
           <Link to="/homes" className="hover:text-blue-700">Agent</Link>
         </div>
@@ -73,10 +86,12 @@ export default function Navbar() {
           <Link to="/" className="text-2xl font-bold text-white md:text-blue-700">RentalWise</Link>
         </div>
 
-        <div className="hidden md:flex gap-6 items-center text-lg font-medium mr-12 text-gray-700">
+        <div className="hidden md:flex gap-6 items-center text-lg font-medium mr-36 text-gray-700">
           <Link to="/landlord" className="hover:text-blue-700">Manage Rentals</Link>
           <Link to="/tours" className="hover:text-blue-700">Help</Link>
-
+          
+        </div>
+        <div className="absolute right-4 md:right-12 flex items-center text-lg font-medium text-white md:text-gray-700">
           {!isAuthenticated ? (
             <Link to="/login" className="hover:text-blue-700">Sign In</Link>
           ) : (
@@ -92,16 +107,16 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-2 w-48 bg-white text-black border border-gray-200 rounded-md shadow-lg z-10">
                   {dropdownItems.map((item) =>
                     item.isButton ? (
-                      <button
+                      <><hr></hr><button
                         key={item.label}
                         onClick={() => {
                           logout(); // 🔐 calls AuthContext logout
                           setDropdownOpen(false);
-                        }}
+                        } }
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
                       >
                         {item.label}
-                      </button>
+                      </button></>
                     ) : (
                       <Link
                         key={item.label}
@@ -117,52 +132,36 @@ export default function Navbar() {
               )}
             </div>
           )}
-        </div>
+          </div>
       </div>
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white text-black p-6 flex flex-col space-y-5 overflow-auto">
+        <div className="fixed inset-0 z-50 bg-white text-black  p-6 flex flex-col space-y-5 overflow-auto">
+          <div className="grid grid-cols-3" >
           <button
-            className="self-end text-3xl text-gray-700"
+            className="self-start text-3xl text-gray-700 hover:text-blue-700"
             onClick={() => setMobileMenuOpen(false)}
           >
-            ✕
+            <FiX />
           </button>
-
-          <Link to="/agents" onClick={() => setMobileMenuOpen(false)}>Buy</Link>
-          <Link to="/tours" onClick={() => setMobileMenuOpen(false)}>Rent</Link>
-          <Link to="/loans" onClick={() => setMobileMenuOpen(false)}>Sell</Link>
-          <Link to="/homes" onClick={() => setMobileMenuOpen(false)}>Homes</Link>
-          <Link to="/agents" onClick={() => setMobileMenuOpen(false)}>Agents</Link>
-          <Link to="/tours" onClick={() => setMobileMenuOpen(false)}>Tours</Link>
-          <Link to="/loans" onClick={() => setMobileMenuOpen(false)}>Loans</Link>
-
-          {!isAuthenticated ? (
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-          ) : (
-            dropdownItems.map((item) =>
-              item.isButton ? (
-                <button
-                  key={item.label}
-                  onClick={() => {
-                    logout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-left"
-                >
-                  {item.label}
-                </button>
-              ) : (
-                <Link
-                  key={item.label}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              )
-            )
-          )}
+          
+          <Link to="/" className="text-2xl font-bold text-center text-blue-700">RentalWise</Link>
+          </div>
+          <hr></hr>
+          <Link to="/agents" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Buy</Link>
+          <hr></hr>
+          <Link to="/tours" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Rent</Link>
+          <hr></hr>
+          <Link to="/loans" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Sell</Link>
+          <hr></hr>
+          <Link to="/homes" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Homes</Link>
+          <hr></hr>
+          <Link to="/agents" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Agents</Link>
+          <hr></hr>
+          <Link to="/landlord" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Manage Rentals</Link>
+          <hr></hr>
+          <Link to="/loans" className="hover:text-blue-700 ml-2" onClick={() => setMobileMenuOpen(false)}>Loans</Link>
+          <hr></hr>
         </div>
       )}
     </nav>

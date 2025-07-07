@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentalWise.Application.DTOs.Property;
+using RentalWise.Application.DTOs.Search;
 using RentalWise.Application.Mappings;
 using RentalWise.Application.Services;
 using RentalWise.Domain.Entities;
+using RentalWise.Domain.Interfaces;
 using RentalWise.Infrastructure.Persistence;
 using System.Security.Claims;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 namespace RentalWise.API.Controllers;
 
 [ApiController]
@@ -19,12 +22,16 @@ public class PropertiesController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
     private readonly IMediaUploadService _mediaUploadService;
+    private readonly IPropertyRepository _propertyRepository;
+    
 
-    public PropertiesController(AppDbContext context, IMapper mapper, IMediaUploadService mediaUploadService)
+    public PropertiesController(AppDbContext context, IMapper mapper, IMediaUploadService mediaUploadService, IPropertyRepository propertyRepository)
     {
         _context = context;
         _mapper = mapper;
         _mediaUploadService = mediaUploadService;
+        _propertyRepository = propertyRepository;
+        
     }
 
 
@@ -32,16 +39,30 @@ public class PropertiesController : ControllerBase
 
     public async Task<ActionResult<IEnumerable<PropertyDto>>> GetAll(int pageNumber = 1, int pageSize = 10) //pagination 10 per page
     {
-        var properties = await _context.Properties
-            .Include(p => p.Suburb)
+        var query = _context.Properties
+       .Include(p => p.Suburb)
+       .ThenInclude(s => s.District)
+                    .ThenInclude(d => d.Region)
        .Include(p => p.Media)
-       .Skip((pageNumber - 1) * pageSize)
-       .Take(pageSize)
-       .ToListAsync();
+       .OrderByDescending(p => p.CreatedAt);
+          
+        var totalCount = await query.CountAsync();
+        var properties = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
         var result = _mapper.Map<List<PropertyDto>>(properties);
 
-        return Ok(properties);
+        // Optional: include pagination metadata
+        return Ok(new
+        {
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Items = result
+        });
+       
     }
 
     [HttpGet("my")]
@@ -98,6 +119,26 @@ public class PropertiesController : ControllerBase
         var result = _mapper.Map<PropertyDto>(property);
         return Ok(result);
     }
+
+    // GET: api/properties/public/5
+    [HttpGet("public/{id}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<PropertyDto>> GetPublicById(int id)
+    {
+        var property = await _context.Properties
+            .Include(p => p.Suburb)
+                .ThenInclude(s => s.District)
+                    .ThenInclude(d => d.Region)
+            .Include(p => p.Media)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (property == null)
+            return NotFound("Property not found.");
+
+        var result = _mapper.Map<PropertyDto>(property);
+        return Ok(result);
+    }
+
 
     // POST: api/properties
     [HttpPost]
@@ -315,4 +356,14 @@ public class PropertiesController : ControllerBase
             return StatusCode(500, "Server error during deletion.");
         }
     }
+
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SearchProperties([FromQuery] PropertySearchFilter filter)
+    {
+        var result = await _propertyRepository.SearchPropertiesAsync(filter);
+        return Ok(result);
+    }
+
+
 }

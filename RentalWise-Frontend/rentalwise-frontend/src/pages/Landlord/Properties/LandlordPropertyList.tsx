@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import AddProperty from './AddProperty';
 import PopModal from '../../../components/UI/PopModal';
+import ImageSlider from '../../../components/UI/ImageSlider';
 import { convertToFormFormat } from '../../../utils/convertToFormFormat';
 import type { Property } from '../../../types/Property';
 import { toast } from 'react-toastify';
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
-
-
 
 export default function LandlordPropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -86,14 +85,10 @@ export default function LandlordPropertyList() {
                 onClick={() => navigate(`/landlord/properties/${property.id}`)}
                 className="cursor-pointer border rounded-lg shadow hover:shadow-lg transition duration-200"
               >
-                <img
-                  src={
-                    property.media.find(m => m.mediaType === 'image')?.url ??
-                    'https://dummyimage.com/400x240/cccccc/000000&text=No+Image'
-                  }
-                  alt={property.name}
-                  className="w-full h-48 object-cover rounded-t-lg"
-                />
+                <ImageSlider
+  images={property.media.filter(m => m.mediaType === 'image').map(m => m.url)}
+  heightClass="h-48"
+/>
                 <div className="p-4 space-y-1">
                   <h2 className="text-lg font-semibold">{property.name}</h2>
                   <button
@@ -139,14 +134,10 @@ export default function LandlordPropertyList() {
       onClick={() => navigate(`/landlord/properties/${property.id}`)}
     >
       {/* Image Section */}
-      <img
-        src={
-          property.media.find((m) => m.mediaType === 'image')?.url ??
-          'https://dummyimage.com/800x400/cccccc/000000&text=No+Image'
-        }
-        alt={property.name}
-        className="w-full h-96 object-cover rounded-t-lg"
-      />
+      <ImageSlider
+  images={property.media.filter(m => m.mediaType === 'image').map(m => m.url)}
+  heightClass="h-96"
+/>
 
       {/* Details Section */}
       <div className="p-4 sm:flex sm:justify-between sm:items-start space-y-2 sm:space-y-0">

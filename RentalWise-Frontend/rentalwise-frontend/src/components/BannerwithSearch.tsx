@@ -1,3 +1,5 @@
+import { IoSearch } from "react-icons/io5";
+
 export default function BannerwithSearch() {
   
   return (
@@ -18,9 +20,9 @@ export default function BannerwithSearch() {
         />
         <button
           type="button"
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-700"
         >
-          🔍
+          <IoSearch className="h-6 w-6"/>
         </button>
       </div>
     </div>

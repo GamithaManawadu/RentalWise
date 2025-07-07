@@ -12,7 +12,9 @@ using RentalWise.Application.Mappings;
 using RentalWise.Application.Services;
 using RentalWise.Application.Validators;
 using RentalWise.Domain.Entities;
+using RentalWise.Domain.Interfaces;
 using RentalWise.Infrastructure.Persistence;
+using RentalWise.Infrastructure.Repositories;
 using RentalWise.Infrastructure.SeedData;
 using System.Text;
 
@@ -124,6 +126,7 @@ builder.Services.AddSingleton(s =>
     return new CloudinaryDotNet.Cloudinary(account);
 });
 builder.Services.AddScoped<IMediaUploadService, MediaUploadService>();
+builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 
 
 var app = builder.Build();

@@ -2,7 +2,10 @@
 using RentalWise.Application.DTOs.Landlord;
 using RentalWise.Application.DTOs.Property;
 using RentalWise.Application.DTOs.Tenant;
+
 using RentalWise.Domain.Entities;
+using RentalWise.Domain.Interfaces;
+
 
 namespace RentalWise.Application.Mappings
 {
@@ -21,6 +24,8 @@ namespace RentalWise.Application.Mappings
                 .ForMember(dest => dest.Media, opt => opt.Ignore()); // Media handled separately after upload
             CreateMap<UpdatePropertyDto, Property>()
                 .ForMember(dest => dest.Media, opt => opt.Ignore()); // Media handled separately after upload
+
+            CreateMap<PropertySearchDto, PropertySearchFilter>();
 
             // Suburb -> SuburbDto
             CreateMap<Suburb, SuburbDto>()

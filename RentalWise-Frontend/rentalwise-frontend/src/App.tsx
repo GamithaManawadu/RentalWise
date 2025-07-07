@@ -16,6 +16,9 @@ import LandlordDashboardLayout from './pages/Landlord/DashboardLayout';
 import AddProperty from './pages/Landlord/Properties/AddProperty';
 import LandlordPropertyList from './pages/Landlord/Properties/LandlordPropertyList';
 import LandlordPropertyDetails from './pages/Landlord/Properties/LandlordPropertyDetails';
+import RentalPropertyList from './pages/RentalPropertyList';
+import RentalPropertyDetails from './pages/RentalPropertyDetails';
+import SearchFilters from './components/SearchFilters';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
@@ -24,17 +27,21 @@ import './App.css'
 function App() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-  const hideNavbarRoutes = ['/login', '/register', '/register/landlord', '/register/tenant', '/landlord/dashboard'];
+  const hideNavbarRoutes = ['/login', '/register', '/register/landlord', '/register/tenant', '/landlord'];
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
+  const isRentalPage = location.pathname === '/rental';
 
   return (
     <>
       {shouldShowNavbar && <Navbar />}
       {isHomePage && <BannerwithSearchSection />}
+      {isRentalPage && <SearchFilters />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RoleSelect />} />
+        <Route path="/rental" element={<RentalPropertyList/>} />
+        
         <Route path="/register/landlord" element={<RegisterLandlord />} />
         <Route path="/register/tenant" element={<RegisterTenant />} />
         <Route path="/landlord"
