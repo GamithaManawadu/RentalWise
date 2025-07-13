@@ -27,31 +27,37 @@ export default function RentalPropertyList() {
   const navigate = useNavigate();
   
   const fetchProperties = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Build params object with pagination + filters
-        const params: any = {
-          pageNumber,
-          pageSize,
-          ...filters,
-        };
+    setLoading(true);
+    setError(null);
+    try {
+      // Build payload with pagination + filters
+      const payload = {
+        ...filters,
+        pageNumber,
+        pageSize,
+      };
   
-        // Clean up null/empty params to avoid sending them to backend
-        Object.keys(params).forEach(
-          key => (params[key] == null || params[key] === '') && delete params[key]
-        );
+      // Clean null/empty values
+      Object.keys(payload).forEach((key) => {
+        const k = key as keyof typeof payload;
+        if (payload[k] == null || payload[k] === '') {
+          delete payload[k];
+        }
+      });
   
-        const response = await api.get('/Properties/search', { params });
-        setProperties(response.data.items);
-        setTotalCount(response.data.totalCount);
-      } catch (err) {
-        console.error('Failed to fetch properties:', err);
-        setError('Failed to load properties. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Use POST with JSON body instead of GET with query params
+      const response = await api.post('/Properties/search', payload);
+  
+      setProperties(response.data.items);
+      setTotalCount(response.data.totalCount);
+    } catch (err) {
+      console.error('Failed to fetch properties:', err);
+      setError('Failed to load properties. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   
     // Refetch properties whenever filters or page changes
     useEffect(() => {
@@ -67,7 +73,7 @@ export default function RentalPropertyList() {
     return (
       <div className="p-12">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-semibold mb-6">Rental Listings</h1>
+          <h1 className="text-2xl font-semibold mb-6">Rental Listings {filters.regionName} {filters.districtName} {filters.suburbNames}</h1>
           
         </div>
   

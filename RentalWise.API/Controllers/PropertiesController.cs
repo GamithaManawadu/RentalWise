@@ -357,9 +357,9 @@ public class PropertiesController : ControllerBase
         }
     }
 
-    [HttpGet("search")]
+    [HttpPost("search")]
     [AllowAnonymous]
-    public async Task<IActionResult> SearchProperties([FromQuery] PropertySearchFilter filter)
+    public async Task<IActionResult> SearchProperties([FromBody] PropertySearchFilter filter)
     {
         var result = await _propertyRepository.SearchPropertiesAsync(filter);
         return Ok(result);

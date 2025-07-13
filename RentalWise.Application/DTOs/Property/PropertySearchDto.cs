@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RentalWise.Domain.Enum;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ public class PropertySearchDto
     public string? Keyword { get; set; }
     public int? RegionId { get; set; }
     public int? DistrictId { get; set; }
-    public int? SuburbId { get; set; }
+    public List<int>? SuburbIds { get; set; }
 
     public int? Bedrooms { get; set; }
     public int? Bathrooms { get; set; }
@@ -22,7 +23,7 @@ public class PropertySearchDto
 
     public DateTime? MoveInDate { get; set; }
 
-    public int? PropertyType { get; set; }
+    public List<int>? PropertyTypes { get; set; }
     public bool? PetsAllowed { get; set; }
     public int? PropertyFeatures { get; set; }
 

@@ -50,9 +50,9 @@ public class PropertyRepository : IPropertyRepository
             query = query.Where(p => p.Suburb.DistrictId == filter.DistrictId.Value);
         }
 
-        if (filter.SuburbId.HasValue)
+        if (filter.SuburbIds != null && filter.SuburbIds.Any())
         {
-            query = query.Where(p => p.SuburbId == filter.SuburbId.Value);
+            query = query.Where(p => filter.SuburbIds.Contains(p.SuburbId));
         }
 
         if (filter.Bedrooms.HasValue)
@@ -73,10 +73,9 @@ public class PropertyRepository : IPropertyRepository
         if (filter.PetsAllowed.HasValue)
             query = query.Where(p => p.PetsAllowed == filter.PetsAllowed.Value);
 
-        if (filter.PropertyType.HasValue)
+        if (filter.PropertyTypes != null && filter.PropertyTypes.Any())
         {
-            var enumValue = (PropertyType)filter.PropertyType.Value;
-            query = query.Where(p => p.PropertyType == enumValue);
+            query = query.Where(p => filter.PropertyTypes.Contains((int)p.PropertyType));
         }
 
         if (filter.PropertyFeatures.HasValue)

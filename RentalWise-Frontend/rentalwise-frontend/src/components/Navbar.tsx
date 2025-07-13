@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; //use our new context
 import { FiMenu, FiX } from 'react-icons/fi';
+import SearchBar from './SearchBar';
 
 interface DropdownItem {
   label: string;
@@ -13,6 +14,7 @@ interface DropdownItem {
 export default function Navbar() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const isRentalPage = location.pathname === '/rental';
   const { user, logout } = useAuth(); //Pull from AuthContext
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -66,14 +68,26 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className={`w-full ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'} flex flex-col`}>
+    <nav className={`w-full  ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'} flex flex-col`}>
       <div className="px-4 md:px-8 py-6 flex items-center justify-between border-b border-white/30 relative bg-transparent md:bg-white">
-        <button
-          className="block md:hidden text-white md:text-gray-700 text-2xl"
+        
+        {isHomePage ?(
+          <button
+          className="block md:hidden text-white md:text-gray-700 text-2xl z-[100]"
+          
           onClick={() => setMobileMenuOpen(true)}
         >
          <FiMenu/>
         </button>
+        ):(<button
+          className="block md:hidden text-blue-700 md:text-gray-700 text-2xl z-[100]"
+          
+          onClick={() => setMobileMenuOpen(true)}
+        >
+         <FiMenu/>
+        </button>
+      )}
+          
 
         <div className="hidden md:flex gap-6 items-center text-lg font-medium ml-12 text-gray-700">
           <Link to="/agents" className="hover:text-blue-700">Buy</Link>
@@ -82,16 +96,31 @@ export default function Navbar() {
           <Link to="/homes" className="hover:text-blue-700">Agent</Link>
         </div>
 
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <Link to="/" className="text-2xl font-bold text-white md:text-blue-700">RentalWise</Link>
-        </div>
+        {/* Centered content (logo or mobile search bar) */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 w-full md:w-auto">
+        {/* Desktop: Show logo always */}
+          <div className="hidden md:block">
+            <Link to="/" className="text-2xl font-bold text-blue-700">RentalWise</Link>
+          </div>
 
+        {/* Mobile: Show search bar only on rental page */}
+         <div className="block md:hidden w-full px-12 text-center relative z-10">
+            {isRentalPage ? (
+              <div className="mb-10">
+              <SearchBar />
+              </div>
+              ) : (
+              <Link to="/" className="text-2xl font-bold text-white">RentalWise</Link>
+              )}
+        </div>
+        </div>
         <div className="hidden md:flex gap-6 items-center text-lg font-medium mr-36 text-gray-700">
           <Link to="/landlord" className="hover:text-blue-700">Manage Rentals</Link>
           <Link to="/tours" className="hover:text-blue-700">Help</Link>
           
         </div>
-        <div className="absolute right-4 md:right-12 flex items-center text-lg font-medium text-white md:text-gray-700">
+        
+        <div className={`absolute right-2 md:right-12 flex items-center text-base md:text-lg font-medium ${isHomePage ? 'text-white': 'text-blue-700'} md:text-gray-700`}>
           {!isAuthenticated ? (
             <Link to="/login" className="hover:text-blue-700">Sign In</Link>
           ) : (
@@ -136,7 +165,7 @@ export default function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white text-black  p-6 flex flex-col space-y-5 overflow-auto">
+        <div className="fixed inset-0 z-[100] bg-white text-black  p-6 flex flex-col space-y-5 overflow-auto">
           <div className="grid grid-cols-3" >
           <button
             className="self-start text-3xl text-gray-700 hover:text-blue-700"
