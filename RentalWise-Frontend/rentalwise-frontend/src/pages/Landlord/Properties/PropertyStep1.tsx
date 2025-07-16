@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { PropertyFormData } from './AddProperty';
 import api from '../../../services/api';
+import { fetchCoordinates } from '../../../utils/geocoding';
 import axios from 'axios';
 
 type Props = {
@@ -111,6 +112,17 @@ export default function PropertyStep1({ data, updateForm, onNext }: Props) {
         console.error('Suburb match failed:', err);
       }
     }
+
+    // Get coordinates and update form
+  try {
+    const coords = await fetchCoordinates(fullAddress);
+    updateForm({
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    });
+  } catch (err) {
+    console.error('Geocoding failed:', err);
+  }
   };
 
   // Called when user clicks "Next" button to submit this step

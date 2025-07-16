@@ -26,7 +26,7 @@ namespace RentalWise.Domain.Interfaces
         public List<int>? PropertyTypes { get; set; }
         public bool? PetsAllowed { get; set; }
         public int? PropertyFeatures { get; set; } // [Flags] int value
-
+        public string? SortBy { get; set; } // "price-asc", "price-desc", "latest"
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
 

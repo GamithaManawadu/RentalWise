@@ -26,5 +26,7 @@ public class PropertyDto
 
     public bool PetsAllowed { get; set; }
     public DateTime AvailableDate { get; set; }
+    public double Latitude { get; set; }  
+    public double Longitude { get; set; }
     public List<PropertyMediaDto> Media { get; set; } = new();
 }

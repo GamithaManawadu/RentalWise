@@ -18,7 +18,8 @@ export type PropertyFormData = {
   suburbId: number | '';
   propertyType: number;
   availableDate: string;
-
+  latitude?: number;    
+  longitude?: number;
   // Step 2 fields
   name: string;
   bedrooms: number;
@@ -45,6 +46,8 @@ const emptyForm: PropertyFormData = {
   suburbId: 0,
   propertyType: 0,
   availableDate: '',
+  latitude: 0,           
+  longitude: 0,
 
   name: '',
   bedrooms: 0,

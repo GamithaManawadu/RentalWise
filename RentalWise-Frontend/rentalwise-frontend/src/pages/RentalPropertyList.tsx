@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../src/services/api';
 import PopModal from '../components/UI/PopModal';
 import ImageSlider from '../components/UI/ImageSlider';
-import { convertToFormFormat } from '../utils/convertToFormFormat';
 import type { Property } from '../types/Property';
-import { toast } from 'react-toastify';
-import { FaEdit } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
 import RentalPropertyDetails from './RentalPropertyDetails';
 import { useSearch } from '../context/SearchContext';
+import SortDropdown from '../components/SortDropdown';
+import MapWithProperties from '../components/MapWithProperties';
 
 export default function RentalPropertyList() {
   const { filters } = useSearch();
@@ -19,9 +17,6 @@ export default function RentalPropertyList() {
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10; // fixed page size, can make configurable if you want
   const [totalCount, setTotalCount] = useState(0);
-  const [showAddProperty, setShowAddProperty] = useState(false);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const navigate = useNavigate();
@@ -71,11 +66,8 @@ export default function RentalPropertyList() {
     const totalPages = Math.ceil(totalCount / pageSize);
   
     return (
-      <div className="p-12">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold mb-6">Rental Listings {filters.regionName} {filters.districtName} {filters.suburbNames}</h1>
-          
-        </div>
+      <div className="p-2">
+        
   
         {loading && <p className="text-center mt-10">Loading properties...</p>}
   
@@ -87,45 +79,82 @@ export default function RentalPropertyList() {
   
         {!loading && !error && properties.length > 0 && (
           <>
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              >
-                {viewMode === 'card' ? 'List View' : 'Card View'}
-              </button>
-            </div>
+           
   
             {viewMode === 'card' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map(property => (
-                  <div
-                    key={property.id}
-                    onClick={() => setSelectedPropertyId(property.id)}
-                    className="cursor-pointer border rounded-lg shadow hover:shadow-lg transition duration-200"
-                  >
-                    <ImageSlider
-                      images={property.media.filter(m => m.mediaType === 'image').map(m => m.url)}
-                      heightClass="h-48"
-                    />
-                    <div className="p-4 space-y-1">
-                      <h2 className="text-lg font-semibold">{property.name}</h2>
-                      <p className="text-sm text-gray-600">
-                        {property.address}, {property.suburb.name}
-                      </p>
-                      <p className="text-sm text-blue-600 font-medium">${property.rentAmount}/week</p>
-                      <div className="text-sm text-gray-700">
-                        {property.bedrooms} 🛏 · {property.bathrooms} 🛁 · {property.parkingSpaces} 🚗
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Available {new Date(property.availableDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6">
+              {/* Map on the left */}
+              <div className="hidden lg:block sticky top-20 h-[600px]">
+                <MapWithProperties properties={properties} />
               </div>
+            
+              {/* Right Side - Header + Cards */}
+              <div className="flex flex-col space-y-4">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <h1 className="text-2xl font-semibold">
+                    Rental Listings {filters.regionName} {filters.districtName} {filters.suburbNames}
+                  </h1>
+                  <div className="flex gap-4">
+                    <SortDropdown />
+                    <button
+                      onClick={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    >
+                      {viewMode === 'card' ? 'List View' : 'Card View'}
+                    </button>
+                  </div>
+                </div>
+            
+                {/* Property Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {properties.map(property => (
+                    <div
+                      key={property.id}
+                      onClick={() => setSelectedPropertyId(property.id)}
+                      className="cursor-pointer border rounded-lg shadow hover:shadow-lg transition duration-200"
+                    >
+                      <ImageSlider
+                        images={property.media.filter(m => m.mediaType === 'image').map(m => m.url)}
+                        heightClass="h-48"
+                      />
+                      <div className="p-4 space-y-1">
+                        <h2 className="text-lg font-semibold">{property.name}</h2>
+                        <p className="text-sm text-gray-600">
+                          {property.address}, {property.suburb.name}
+                        </p>
+                        <p className="text-sm text-blue-600 font-medium">${property.rentAmount}/week</p>
+                        <div className="text-sm text-gray-700">
+                          {property.bedrooms} 🛏 · {property.bathrooms} 🛁 · {property.parkingSpaces} 🚗
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Available {new Date(property.availableDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
             ) : (
+              <>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-2xl font-semibold">
+            Rental Listings {filters.regionName} {filters.districtName} {filters.suburbNames}
+          </h1>
+          <div className="flex gap-4">
+            <SortDropdown />
+            <button
+              onClick={() => setViewMode('card')}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              Card View
+            </button>
+          </div>
+        </div>
               <div className="space-y-6">
+                
                 {properties.map(property => (
                   <div
                     key={property.id}
@@ -154,6 +183,7 @@ export default function RentalPropertyList() {
                   </div>
                 ))}
               </div>
+              </>
             )}
   
             {/* Pagination Controls */}

@@ -122,6 +122,12 @@ export default function PropertyStep3({ data, updateForm, onBack, onSubmit }: Pr
       // Use date only (YYYY-MM-DD) format, adjust as needed for your backend
       formData.append('AvailableDate', new Date(data.availableDate).toISOString().split('T')[0]);
 
+      // Add coordinates if present
+  if (data.latitude !== undefined && data.longitude !== undefined) {
+      formData.append('Latitude', data.latitude.toString());
+      formData.append('Longitude', data.longitude.toString());
+      }
+
       // Append new images
       imageFiles.forEach((file) => formData.append('Images', file));
 

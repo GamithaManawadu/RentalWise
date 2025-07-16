@@ -28,6 +28,10 @@ export function convertToFormFormat(property: Property): PropertyFormData {
     petsAllowed: property.petsAllowed ?? false,
     rentAmount: property.rentAmount ?? 0,
 
+    latitude: property.latitude ?? 0,          
+    longitude: property.longitude ?? 0,        
+
+
     images: [],
     video: null,
 

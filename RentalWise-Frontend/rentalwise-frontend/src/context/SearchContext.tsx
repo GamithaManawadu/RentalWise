@@ -21,6 +21,7 @@ interface SearchFilters {
   regionName?: string | null;
   districtName?: string | null;
   suburbNames?: string[] | null;
+  sortBy?: string;
 }
 
 interface SearchContextType {
@@ -48,6 +49,7 @@ const defaultFilters: SearchFilters = {
   regionName: null,
   districtName: null,
   suburbNames: null,
+  sortBy: 'latest',
 };
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -75,7 +77,7 @@ function parseQueryParams(queryString: string): Partial<SearchFilters> {  //take
     moveInDate: params.get('moveInDate') || null,
     page: getNum('page') ?? 1,
     pageSize: getNum('pageSize') ?? 10,
-
+    sortBy: params.get('sortBy') || 'latest',
     // Parse names
     regionName: params.get('regionName') || null,
     districtName: params.get('districtName') || null,

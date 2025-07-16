@@ -31,6 +31,8 @@ public class CreatePropertyDto
 
     public bool PetsAllowed { get; set; }
     public DateTime AvailableDate { get; set; }
+    public double Latitude { get; set; }  
+    public double Longitude { get; set; }
 
     // Media files
     public List<IFormFile> Images { get; set; } = new();

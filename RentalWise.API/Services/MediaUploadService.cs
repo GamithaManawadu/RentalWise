@@ -27,7 +27,7 @@ public class MediaUploadService : IMediaUploadService
     {
         var uploaded = new List<PropertyMedia>();
 
-        // ✅ Safeguard for null
+        // Safeguard for null
         images ??= new List<IFormFile>();
 
         // Limit to 20 images total

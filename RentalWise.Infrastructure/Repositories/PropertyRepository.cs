@@ -89,8 +89,18 @@ public class PropertyRepository : IPropertyRepository
 
         var totalCount = await query.CountAsync();
 
+
+
+        // Apply sorting
+        query = filter.SortBy?.ToLower() switch
+        {
+            "price-asc" => query.OrderBy(p => p.RentAmount),
+            "price-desc" => query.OrderByDescending(p => p.RentAmount),
+            "latest" => query.OrderByDescending(p => p.CreatedAt), // or AvailableDate
+            _ => query.OrderByDescending(p => p.CreatedAt) // default sort
+        };
+
         var items = await query
-            .OrderBy(p => p.AvailableDate)
             .Skip((filter.PageNumber - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .ToListAsync();

@@ -15,6 +15,8 @@ export type Property = {
     petsAllowed: boolean;
     features: number;
     propertyType: number;
+    latitude?: number;    
+  longitude?: number;
     media: {
       id:number;
       url: string;

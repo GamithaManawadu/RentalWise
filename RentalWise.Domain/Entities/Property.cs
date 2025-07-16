@@ -20,7 +20,7 @@ public class Property
     [ForeignKey("UserId")]
     public ApplicationUser User { get; set; } = null!;
 
-    // Optional: Navigation to landlord via UserId
+    // landlord via UserId
     [Required]
     public Guid LandlordId { get; set; }
 
@@ -43,6 +43,8 @@ public class Property
 
     public bool PetsAllowed { get; set; } = false;
     public DateTime AvailableDate { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
     public bool IsActive { get; set; } = true;
 
 

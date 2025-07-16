@@ -26,6 +26,7 @@ public class PropertySearchDto
     public List<int>? PropertyTypes { get; set; }
     public bool? PetsAllowed { get; set; }
     public int? PropertyFeatures { get; set; }
+    public string? SortBy { get; set; } // "price-asc", "price-desc", "latest"
 
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;

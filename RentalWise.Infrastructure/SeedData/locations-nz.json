@@ -512,7 +512,10 @@
       },
       {
         "name": "Marlborough",
-        "suburbs": [ "Waikawa" ]
+        "suburbs": [
+          "Waikawa",
+          "Picton"
+        ]
       }
     ]
   },

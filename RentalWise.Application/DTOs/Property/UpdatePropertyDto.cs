@@ -26,6 +26,8 @@ public class UpdatePropertyDto
     public PropertyFeatures Features { get; set; }
     public bool PetsAllowed { get; set; }
     public DateTime AvailableDate { get; set; }
+    public double Latitude { get; set; }  
+    public double Longitude { get; set; }
 
     public List<IFormFile>? Images { get; set; }
     public IFormFile? Video { get; set; }
