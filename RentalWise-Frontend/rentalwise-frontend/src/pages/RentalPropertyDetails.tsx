@@ -34,24 +34,24 @@ const propertyTypeMap: Record<number, string> = {
   };
   
 
-export default function RentalPropertyDetails({ propertyId }: { propertyId: number }) {
+export default function RentalPropertyDetails() {
+  const { id } = useParams();
   const [property, setProperty] = useState<Property | null>(null);
+  const navigate = useNavigate();
   
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await api.get(`/Properties/public/${propertyId}`);
+        const response = await api.get(`/Properties/public/${id}`);
         setProperty(response.data);
       } catch (err) {
         console.error('Failed to fetch property:', err);
         
       }
     };
-    if (propertyId){
     fetchDetails();
-  }
- }, [propertyId]);
+  }, [id, navigate]);
 
   if (!property) return <p className="text-center mt-10">Loading property details...</p>;
 
@@ -62,7 +62,12 @@ export default function RentalPropertyDetails({ propertyId }: { propertyId: numb
   return (
     <div className="max-w-4xl mx-auto p-6">
       
-
+      <button
+        onClick={() => navigate(-1)}
+        className="text-blue-600 hover:underline mb-4"
+      >
+        ← Back to List
+      </button>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {property.media.map((m, i) =>
           m.mediaType === 'image' ? (

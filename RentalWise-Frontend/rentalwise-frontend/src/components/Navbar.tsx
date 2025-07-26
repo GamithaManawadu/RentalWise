@@ -68,8 +68,8 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className={`w-full  ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'} flex flex-col`}>
-      <div className="px-4 md:px-8 py-6 flex items-center justify-between border-b border-white/30 relative bg-transparent md:bg-white">
+    <nav className={`w-full sticky ${isHomePage ? 'absolute top-0 left-0 z-50 bg-transparent' : 'bg-white shadow-sm'}  flex flex-col`}>
+      <div className="px-4 md:px-8 py-6  flex items-center justify-between border-b border-white/30 relative bg-transparent md:bg-white">
         
         {isHomePage ?(
           <button

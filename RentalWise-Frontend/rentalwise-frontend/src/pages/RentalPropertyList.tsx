@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../src/services/api';
-import PopModal from '../components/UI/PopModal';
 import ImageSlider from '../components/UI/ImageSlider';
 import type { Property } from '../types/Property';
-import RentalPropertyDetails from './RentalPropertyDetails';
 import { useSearch } from '../context/SearchContext';
 import SortDropdown from '../components/SortDropdown';
 import MapWithProperties from '../components/MapWithProperties';
+import { TbBed } from 'react-icons/tb';
+import { BiBath } from 'react-icons/bi';
+import { MdOutlineDirectionsCar } from 'react-icons/md';
+import { FaMapMarkedAlt} from "react-icons/fa";
 
 export default function RentalPropertyList() {
   const { filters } = useSearch();
@@ -18,6 +20,9 @@ export default function RentalPropertyList() {
   const pageSize = 10; // fixed page size, can make configurable if you want
   const [totalCount, setTotalCount] = useState(0);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
+  const [selectedMarkerProperty, setSelectedMarkerProperty] = useState<Property | null>(null);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<number | null>(null);
+  const [flyToCoordinates, setFlyToCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const navigate = useNavigate();
   
@@ -62,6 +67,11 @@ export default function RentalPropertyList() {
     useEffect(() => {
       fetchProperties();
     }, [filters, pageNumber]);
+
+    const handleMarkerClick = (id: number) => {
+      const selected = properties.find(p => p.id === id) || null;
+      setSelectedMarkerProperty(selected);
+    };
   
     const totalPages = Math.ceil(totalCount / pageSize);
   
@@ -82,10 +92,18 @@ export default function RentalPropertyList() {
            
   
             {viewMode === 'card' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
               {/* Map on the left */}
               <div className="hidden lg:block sticky top-20 h-[600px]">
-                <MapWithProperties properties={properties} />
+              <MapWithProperties
+                properties={properties}
+                selectedPropertyId={selectedPropertyId}
+                hoveredPropertyId={hoveredPropertyId}
+                onMarkerClick={handleMarkerClick}
+                onMarkerHover={setHoveredPropertyId}
+                flyToCoordinates={flyToCoordinates}
+                selectedMarkerProperty={selectedMarkerProperty}
+              />
               </div>
             
               {/* Right Side - Header + Cards */}
@@ -105,30 +123,62 @@ export default function RentalPropertyList() {
                     </button>
                   </div>
                 </div>
-            
+                           
                 {/* Property Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {properties.map(property => (
                     <div
                       key={property.id}
-                      onClick={() => setSelectedPropertyId(property.id)}
-                      className="cursor-pointer border rounded-lg shadow hover:shadow-lg transition duration-200"
-                    >
+                      onClick={() => navigate(`/properties/public/${property.id}`)}
+                     onMouseEnter={() => setHoveredPropertyId(property.id)}
+                     onMouseLeave={() => setHoveredPropertyId(null)}
+                     className={`cursor-pointer border rounded-lg shadow hover:shadow-lg transition duration-200 ${
+                     property.id === hoveredPropertyId ? 'shadow hover:shadow-lg transition duration-200' : ''
+                      }`}
+                      >
                       <ImageSlider
                         images={property.media.filter(m => m.mediaType === 'image').map(m => m.url)}
                         heightClass="h-48"
                       />
                       <div className="p-4 space-y-1">
-                        <h2 className="text-lg font-semibold">{property.name}</h2>
+                      <div className="flex justify-between items-center">
+    <h2 className="text-lg font-semibold">{property.name}</h2>
+    {property.latitude && property.longitude && (
+      <button
+        onClick={(e) =>{
+          e.stopPropagation(); 
+          setFlyToCoordinates({ lat: property.latitude!, lng: property.longitude! });
+        }}
+        className="text-blue-600 hover:text-blue-800 transition"
+        title="View on Map"
+      >
+        <FaMapMarkedAlt className="text-xl" />
+      </button>
+    )}
+  </div>
+
                         <p className="text-sm text-gray-600">
-                          {property.address}, {property.suburb.name}
+                          {property.address}
                         </p>
-                        <p className="text-sm text-blue-600 font-medium">${property.rentAmount}/week</p>
-                        <div className="text-sm text-gray-700">
-                          {property.bedrooms} 🛏 · {property.bathrooms} 🛁 · {property.parkingSpaces} 🚗
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          Available {new Date(property.availableDate).toLocaleDateString()}
+                       
+                         {/* Features Row with Icons */}
+                         <div className="flex justify-between items-center">
+        <div className="flex gap-4 text-gray-700 font-semibold text-sm items-center">
+          <span className="flex items-center gap-1">
+            <TbBed className="text-lg" /> {property.bedrooms}
+          </span>
+          <span className="flex items-center gap-1">
+            <BiBath className="text-lg" /> {property.bathrooms}
+          </span>
+          <span className="flex items-center gap-1">
+            <MdOutlineDirectionsCar className="text-lg" />{' '}
+            {property.parkingSpaces}
+          </span>
+        </div>
+        <p className="text-base text-gray-800 font-semibold">${property.rentAmount}</p>
+        </div>
+                        <p className="text-sm text-gray-600">
+                          Available: {new Date(property.availableDate).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -211,13 +261,7 @@ export default function RentalPropertyList() {
           </>
         )}
   
-        <PopModal
-          isOpen={selectedPropertyId !== null}
-          onClose={() => setSelectedPropertyId(null)}
-          title="Property Details"
-        >
-          {selectedPropertyId && <RentalPropertyDetails propertyId={selectedPropertyId} />}
-        </PopModal>
+        
       </div>
     );
   }

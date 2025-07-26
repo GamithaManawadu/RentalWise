@@ -17,6 +17,7 @@ import AddProperty from './pages/Landlord/Properties/AddProperty';
 import LandlordPropertyList from './pages/Landlord/Properties/LandlordPropertyList';
 import LandlordPropertyDetails from './pages/Landlord/Properties/LandlordPropertyDetails';
 import RentalPage from './pages/RentalPage';
+import RentalPropertyDetails from './pages/RentalPropertyDetails';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
@@ -39,6 +40,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RoleSelect />} />
         <Route path="/rental" element={<RentalPage/>} />
+        <Route path="/properties/public/:id" element={<RentalPropertyDetails/>} />
+        
         
         <Route path="/register/landlord" element={<RegisterLandlord />} />
         <Route path="/register/tenant" element={<RegisterTenant />} />
