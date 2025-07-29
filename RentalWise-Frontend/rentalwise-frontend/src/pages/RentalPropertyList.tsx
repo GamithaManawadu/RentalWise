@@ -6,8 +6,7 @@ import type { Property } from '../types/Property';
 import { useSearch } from '../context/SearchContext';
 import SortDropdown from '../components/SortDropdown';
 import MapWithProperties from '../components/MapWithProperties';
-import { TbBed } from 'react-icons/tb';
-import { BiBath } from 'react-icons/bi';
+import { TbBed, TbBath, } from 'react-icons/tb';
 import { MdOutlineDirectionsCar } from 'react-icons/md';
 import { FaMapMarkedAlt} from "react-icons/fa";
 
@@ -168,7 +167,7 @@ export default function RentalPropertyList() {
             <TbBed className="text-lg" /> {property.bedrooms}
           </span>
           <span className="flex items-center gap-1">
-            <BiBath className="text-lg" /> {property.bathrooms}
+            <TbBath className="text-lg" /> {property.bathrooms}
           </span>
           <span className="flex items-center gap-1">
             <MdOutlineDirectionsCar className="text-lg" />{' '}

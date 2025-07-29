@@ -9,6 +9,8 @@ import type { Property } from '../../../types/Property';
 import { toast } from 'react-toastify';
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { TbBed, TbBath, } from 'react-icons/tb';
+import { MdOutlineDirectionsCar } from 'react-icons/md';
 
 export default function LandlordPropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -112,15 +114,27 @@ export default function LandlordPropertyList() {
 <MdDelete className="h-6 w-6" />
 </button>
                   <p className="text-sm text-gray-600">
-                    {property.address}, {property.suburb.name}
+                    {property.address}
                   </p>
-                  <p className="text-sm text-blue-600 font-medium">${property.rentAmount}/week</p>
-                  <div className="text-sm text-gray-700">
-                    {property.bedrooms} 🛏 · {property.bathrooms} 🛁 · {property.parkingSpaces} 🚗
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Available {new Date(property.availableDate).toLocaleDateString()}
-                  </p>
+                  {/* Features Row with Icons */}
+                  <div className="flex justify-between items-center">
+        <div className="flex gap-4 text-gray-700 font-semibold text-sm items-center">
+          <span className="flex items-center gap-1">
+            <TbBed className="text-lg" /> {property.bedrooms}
+          </span>
+          <span className="flex items-center gap-1">
+            <TbBath className="text-lg" /> {property.bathrooms}
+          </span>
+          <span className="flex items-center gap-1">
+            <MdOutlineDirectionsCar className="text-lg" />{' '}
+            {property.parkingSpaces}
+          </span>
+        </div>
+        <p className="text-base text-gray-800 font-semibold">${property.rentAmount}</p>
+        </div>
+        <p className="text-sm text-gray-600">
+                          Available: {new Date(property.availableDate).toLocaleDateString()}
+                        </p>
                 </div>
               </div>
             ))}
