@@ -232,6 +232,8 @@ Technologies Used
   Email notifications
 
   Mobile-friendly enhancement
+  
+---
 
 ## 🙋‍♂️ Author
 
@@ -242,6 +244,8 @@ Nandu Gamitha
 📝 [![Medium](https://img.shields.io/badge/Medium-Blog-black?style=flat&logo=medium)](https://medium.com/@gamithamanawadu26_76048)
 
 💼 Aspiring Full-Stack Developer
+
+---
 
 ## 📄 License
 This project is licensed under the MIT License.
