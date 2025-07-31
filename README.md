@@ -199,7 +199,7 @@ PUT /api/tenants – Update tenant details
 DELETE /api/tenants – Delete tenant account
 ```
 
-##🧪 Testing
+## 🧪 Testing
 
 Run All Tests
 ```
