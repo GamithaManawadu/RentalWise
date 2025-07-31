@@ -43,6 +43,16 @@ public class Property
 
     public bool PetsAllowed { get; set; } = false;
     public DateTime AvailableDate { get; set; }
+
+    public string Furnishings { get; set; } = null!;
+
+    public int MaximumTenants { get; set; }
+
+    public BroadbandTypes Broadband { get; set; } = BroadbandTypes.None;
+
+    public bool SmokeAlarm { get; set; } = false;
+
+    public string Description { get; set; } = null!;
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public bool IsActive { get; set; } = true;

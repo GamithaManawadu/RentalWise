@@ -26,6 +26,15 @@ public class UpdatePropertyDto
     public PropertyFeatures Features { get; set; }
     public bool PetsAllowed { get; set; }
     public DateTime AvailableDate { get; set; }
+
+    public string Furnishings { get; set; } = null!;
+    public int MaximumTenants { get; set; }
+
+    public BroadbandTypes Broadband { get; set; }
+
+    public bool SmokeAlarm { get; set; } 
+
+    public string Description { get; set; } = null!;
     public double Latitude { get; set; }  
     public double Longitude { get; set; }
 

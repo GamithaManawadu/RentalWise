@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import PropertyStep1 from './PropertyStep1';
 import PropertyStep2 from './PropertyStep2';
 import PropertyStep3 from './PropertyStep3';
+import PropertyStep4 from './PropertyStep4';
 
 // Define the shape of all the form data collected across steps
 export type MediaItem = {
@@ -28,8 +29,13 @@ export type PropertyFormData = {
   features: number;
   petsAllowed: boolean;
   rentAmount: number;
-
   // Step 3 fields
+  furnishings: string;
+  maximumTenants: number;
+  broadband: number;
+  smokeAlarm: boolean;
+  description: string;
+  // Step 4 fields
   images: File[];
   video?: File | null;
 
@@ -57,6 +63,12 @@ const emptyForm: PropertyFormData = {
   petsAllowed: false,
   rentAmount: 0,
 
+  furnishings:'',
+  maximumTenants: 0,
+  broadband: 0,
+  smokeAlarm: false,
+  description:'',
+
   images: [],
   video: null,
 
@@ -78,7 +90,7 @@ export default function AddProperty({ onSuccess, onClose, initialFormData }: Add
 
   useEffect(() => {
     if (initialFormData) {
-      console.log("Received initialFormData:", initialFormData); // ✅ check
+      console.log("Received initialFormData:", initialFormData); //  check
       setFormData(prev => ({ ...prev, ...initialFormData }));
     }
   }, [initialFormData]);
@@ -102,8 +114,8 @@ export default function AddProperty({ onSuccess, onClose, initialFormData }: Add
       {/* Step Indicator */}
       <div className="mb-10">
         <div className="flex flex-col sm:flex-row justify-center items-center sm:space-x-12 gap-6">
-          {[1, 2, 3].map((id, index) => {
-            const labels = ['Basic Info', 'Details', 'Media Upload'];
+          {[1, 2, 3, 4].map((id, index) => {
+            const labels = ['Basic Info', 'Details', 'Additional Info', 'Media Upload'];
             const isCompleted = step > id;
             const isActive = step === id;
 
@@ -137,7 +149,10 @@ export default function AddProperty({ onSuccess, onClose, initialFormData }: Add
         <PropertyStep2 data={formData} onNext={nextStep} onBack={prevStep} updateForm={updateForm} />
       )}
       {step === 3 && (
-        <PropertyStep3 data={formData} onSubmit={submitForm} onBack={prevStep} updateForm={updateForm} />
+        <PropertyStep3 data={formData} onNext={nextStep} onBack={prevStep} updateForm={updateForm} />
+      )}
+      {step === 4 && (
+        <PropertyStep4 data={formData} onSubmit={submitForm} onBack={prevStep} updateForm={updateForm} />
       )}
     </>
   );

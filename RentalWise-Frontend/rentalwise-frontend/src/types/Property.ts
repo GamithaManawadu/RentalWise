@@ -15,8 +15,13 @@ export type Property = {
     petsAllowed: boolean;
     features: number;
     propertyType: number;
+    furnishings: string;
+    maximumTenants: number;
+    broadband: number;
+    smokeAlarm: boolean;
+    description: string;
     latitude?: number;    
-  longitude?: number;
+    longitude?: number;
     media: {
       id:number;
       url: string;
